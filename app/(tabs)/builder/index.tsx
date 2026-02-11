@@ -16,7 +16,7 @@ export default function CreateScreen() {
     if (!name || !duration || !daysPerWeek) return
 
     router.push({
-      pathname: '/create/weeks',
+      pathname: '/builder/weeks',
       params: {
         name,
         duration: Number(duration),
