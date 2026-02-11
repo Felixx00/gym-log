@@ -7,15 +7,17 @@ export default function CreateScreen() {
 
   const [name, setName] = useState('')
   const [duration, setDuration] = useState('')
+  const [daysPerWeek, setDaysPerWeek] = useState('')
 
   const handleNext = () => {
-    if (!name || !duration) return
+    if (!name || !duration || !daysPerWeek) return
 
     router.push({
       pathname: '/create/weeks',
       params: {
         name,
         duration: Number(duration),
+        daysPerWeek: Number(daysPerWeek),
       },
     })
   }
@@ -35,6 +37,14 @@ export default function CreateScreen() {
         placeholder="Duration (weeks)"
         value={duration}
         onChangeText={setDuration}
+        keyboardType="number-pad"
+        style={styles.input}
+      />
+
+      <TextInput
+        placeholder="Days per week"
+        value={daysPerWeek}
+        onChangeText={setDaysPerWeek}
         keyboardType="number-pad"
         style={styles.input}
       />
