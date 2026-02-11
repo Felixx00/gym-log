@@ -9,6 +9,8 @@ import {
     View,
 } from 'react-native';
 
+import { Colors } from '@/constants/theme';
+
 // ---------------- Types ----------------
 type Exercise = {
     id: string;
@@ -34,13 +36,14 @@ type Week = {
 
 // ---------------- Component ----------------
 export default function Weeks() {
-    const { name, duration } = useLocalSearchParams<{
+    const { name, duration, daysPerWeek } = useLocalSearchParams<{
         name?: string;
         duration?: string;
+        daysPerWeek?: string;
     }>();
 
     const totalWeeks = Number(duration ?? 1); // default to 1 week if missing
-    const DAYS_PER_WEEK = 7;
+    const totalDays = Number(daysPerWeek ?? 7); // default to 7 days if missing
 
     // ---------------- State ----------------
     const [activeWeek, setActiveWeek] = useState(1);
@@ -49,7 +52,7 @@ export default function Weeks() {
         Array.from({ length: totalWeeks }, (_, w) => ({
             id: `week-${w + 1}`,
             name: `Week ${w + 1}`,
-            days: Array.from({ length: DAYS_PER_WEEK }, (_, d) => ({
+            days: Array.from({ length: totalDays }, (_, d) => ({
                 id: `day-${d + 1}`,
                 name: `Day ${d + 1}`,
                 exercises: [] as Exercise[], // important for TS
@@ -159,6 +162,7 @@ export default function Weeks() {
                                 <Text style={styles.exerciseNumber}>#{index + 1}</Text>
                                 <TextInput
                                     placeholder="Exercise Name"
+                                    placeholderTextColor={Colors.textTertiary}
                                     value={ex.name}
                                     onChangeText={(text) =>
                                         updateExercise(day.id, ex.id, { name: text })
@@ -167,6 +171,7 @@ export default function Weeks() {
                                 />
                                 <TextInput
                                     placeholder="Sets"
+                                    placeholderTextColor={Colors.textTertiary}
                                     value={ex.sets.toString()}
                                     keyboardType="number-pad"
                                     onChangeText={(text) =>
@@ -176,6 +181,7 @@ export default function Weeks() {
                                 />
                                 <TextInput
                                     placeholder="Reps"
+                                    placeholderTextColor={Colors.textTertiary}
                                     value={ex.reps}
                                     onChangeText={(text) =>
                                         updateExercise(day.id, ex.id, { reps: text })
@@ -184,6 +190,7 @@ export default function Weeks() {
                                 />
                                 <TextInput
                                     placeholder="RIR"
+                                    placeholderTextColor={Colors.textTertiary}
                                     value={ex.rir?.toString() ?? ''}
                                     keyboardType="number-pad"
                                     onChangeText={(text) =>
@@ -193,6 +200,7 @@ export default function Weeks() {
                                 />
                                 <TextInput
                                     placeholder="Technique"
+                                    placeholderTextColor={Colors.textTertiary}
                                     value={ex.technique}
                                     onChangeText={(text) =>
                                         updateExercise(day.id, ex.id, { technique: text })
@@ -206,7 +214,7 @@ export default function Weeks() {
                             onPress={() => addExercise(day.id)}
                             style={styles.addExerciseButton}
                         >
-                            <Text style={{ color: '#fff' }}>+ Add Exercise</Text>
+                            <Text style={styles.addExerciseButtonText}>+ Add Exercise</Text>
                         </Pressable>
                     </View>
                 ))}
@@ -217,17 +225,17 @@ export default function Weeks() {
 
 // ---------------- Styles ----------------
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+    container: { flex: 1, padding: 20, backgroundColor: Colors.background },
 
-    title: { fontSize: 26, fontWeight: '600', marginBottom: 4, marginTop: 20 },
-    subtitle: { fontSize: 16, color: '#666', marginBottom: 6 },
+    title: { fontSize: 26, fontWeight: '600', marginBottom: 4, marginTop: 20, color: Colors.textPrimary },
+    subtitle: { fontSize: 16, color: Colors.textSecondary, marginBottom: 6 },
 
     tabsContainer: { gap: 8, paddingHorizontal: 0, paddingVertical: 0 },
     weekTab: {
         height: 32,
         paddingHorizontal: 14,
         borderRadius: 16,
-        backgroundColor: '#eee',
+        backgroundColor: Colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -236,24 +244,25 @@ const styles = StyleSheet.create({
         marginTop: 10,
         paddingVertical: 6,
     },
-    weekTabActive: { backgroundColor: '#000' },
-    weekTabText: { fontSize: 13, fontWeight: '500', color: '#333' },
-    weekTabTextActive: { color: '#fff' },
+    weekTabActive: { backgroundColor: Colors.accent },
+    weekTabText: { fontSize: 13, fontWeight: '500', color: Colors.textSecondary },
+    weekTabTextActive: { color: Colors.textPrimary },
 
     daysContainer: { marginTop: 8 },
 
     daySection: { marginBottom: 30, paddingVertical: 4 },
-    dayTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+    dayTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8, color: Colors.textPrimary },
 
-    exerciseCard: { backgroundColor: '#f2f2f2', padding: 12, borderRadius: 10, marginBottom: 8 },
-    input: { borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 6, marginBottom: 6 },
+    exerciseCard: { backgroundColor: Colors.surface, padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: Colors.border },
+    input: { borderWidth: 1, borderColor: Colors.border, padding: 8, borderRadius: 6, marginBottom: 6, backgroundColor: Colors.surfaceElevated, color: Colors.textPrimary },
 
-    addExerciseButton: { backgroundColor: '#000', padding: 10, borderRadius: 8, alignItems: 'center' },
+    addExerciseButton: { backgroundColor: Colors.accent, padding: 10, borderRadius: 8, alignItems: 'center' },
+    addExerciseButtonText: { color: Colors.textPrimary, fontWeight: '500' },
     exerciseNumber: {
         fontWeight: '600',
         fontSize: 14,
         marginBottom: 4,
-        color: '#555',
+        color: Colors.textSecondary,
     },
 
 });

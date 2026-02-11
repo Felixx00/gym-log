@@ -49,10 +49,10 @@ The app uses Expo Router's file-based routing with the following hierarchy:
 app/
 ├── _layout.tsx              # Root layout with theme provider
 ├── (tabs)/                  # Tab navigator group
-│   ├── _layout.tsx          # Tab bar configuration (Home, Create)
-│   ├── index.tsx            # Home tab screen
-│   └── create/              # Create workflow (stack navigation)
-│       ├── _layout.tsx      # Stack navigator for create flow
+│   ├── _layout.tsx          # Tab bar configuration (Dashboard, Builder)
+│   ├── index.tsx            # Dashboard tab screen
+│   └── create/              # Builder workflow (stack navigation)
+│       ├── _layout.tsx      # Stack navigator for builder flow
 │       ├── index.tsx        # Step 1: Program metadata (name, duration, days/week)
 │       ├── weeks.tsx        # Step 2: Build weeks/days/exercises
 │       └── [week]/          # Dynamic route (currently minimal)
@@ -62,12 +62,12 @@ app/
 
 ### Navigation Flow
 
-1. **Home Tab** (`(tabs)/index.tsx`): Welcome screen with placeholder content
-2. **Create Tab** (`(tabs)/create/`): Multi-step program creation
+1. **Dashboard Tab** (`(tabs)/index.tsx`): Welcome screen with placeholder content for future program listings
+2. **Builder Tab** (`(tabs)/create/`): Multi-step program creation
    - `index.tsx`: Collects program name, duration (weeks), and days per week
    - `weeks.tsx`: Main program builder - allows users to:
      - Switch between weeks via horizontal tabs
-     - Add exercises to each day (7 days per week currently hardcoded)
+     - Add exercises to each day (dynamically based on user input)
      - Configure exercise details: name, sets, reps, RIR (Reps in Reserve), technique
 
 ### Data Structure (In-Memory Only)
@@ -105,24 +105,36 @@ The project uses `@/` as an alias for the root directory:
 
 ```typescript
 import { HelloWave } from '@/components/hello-wave';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 ```
 
 Configured in `tsconfig.json` via `"paths": { "@/*": ["./*"] }`.
 
 ### Theming System
 
-- `hooks/use-color-scheme.ts`: Detects system color scheme (light/dark)
-- `hooks/use-theme-color.ts`: Returns theme-aware colors
-- `constants/theme.ts`: Color definitions
-- `components/themed-*.tsx`: Theme-aware wrapper components
-- Root layout applies `@react-navigation/native` theme based on color scheme
+The app uses a **single dark theme** - no light/dark mode switching:
+
+- `constants/theme.ts`: All color definitions in one place
+- Dark, minimalist, elegant palette with red accent for contrast
+- Root layout (`app/_layout.tsx`) applies custom GymLogTheme to React Navigation
+- All screens import and use `Colors` directly from `@/constants/theme`
+
+**Color Palette**:
+- Background: `#0F0F0F` (deep dark)
+- Surface: `#1A1A1A` (cards, elevated surfaces)
+- Surface Elevated: `#242424` (higher elevation)
+- Text Primary: `#FAFAFA` (off-white)
+- Text Secondary: `#9E9E9E` (muted gray)
+- Text Tertiary: `#666666` (darker gray)
+- **Accent: `#DC3545` (elegant red for primary actions)**
+- Primary: `#FFFFFF` (pure white for secondary actions)
+- Border: `#2A2A2A` (subtle borders)
 
 ## Key Implementation Details
 
-### Create Workflow State Management
+### Builder Workflow State Management
 
-The create flow uses URL params to pass data between screens:
+The builder flow uses URL params to pass data between screens:
 
 ```typescript
 // Step 1 (create/index.tsx) navigates to Step 2:
@@ -132,18 +144,18 @@ router.push({
 });
 
 // Step 2 (weeks.tsx) reads params:
-const { name, duration } = useLocalSearchParams();
+const { name, duration, daysPerWeek } = useLocalSearchParams();
+const totalDays = Number(daysPerWeek ?? 7); // Creates dynamic number of days
 ```
 
-State within `weeks.tsx` uses complex nested updates to modify exercises/days/weeks immutably.
+State within `weeks.tsx` uses complex nested updates to modify exercises/days/weeks immutably. The number of days per week is dynamically created based on user input.
 
 ### Current Limitations
 
 1. **No data persistence**: SQLite integration is planned but not implemented
-2. **Hardcoded values**: Days per week is always 7, regardless of user input from Step 1
-3. **No validation**: Users can save incomplete or invalid exercise data
-4. **No edit/delete**: Cannot remove exercises or navigate back without losing data
-5. **No program list**: Cannot view or select previously created programs
+2. **No validation**: Users can save incomplete or invalid exercise data
+3. **No edit/delete**: Cannot remove exercises or navigate back without losing data
+4. **No program list**: Cannot view or select previously created programs
 
 ## Development Patterns
 
@@ -156,10 +168,17 @@ State within `weeks.tsx` uses complex nested updates to modify exercises/days/we
 
 ### Styling Conventions
 
-- Colors: Black (`#000`) for primary actions, light grays for inactive states
+- Colors: Import from `@/constants/theme` - NEVER hardcode colors
+- Backgrounds: Use `Colors.background`, `Colors.surface`, `Colors.surfaceElevated` for depth
+- Text: Use `Colors.textPrimary`, `Colors.textSecondary`, `Colors.textTertiary` for hierarchy
+- Actions:
+  - `Colors.accent` (red) for primary buttons and CTAs
+  - `Colors.primary` (white) for secondary actions
+  - Button text: `Colors.textPrimary` on accent backgrounds
+- Active states: Use `Colors.accent` for selected tabs, active weeks, etc.
 - Spacing: Consistent padding (10-20px), margin bottom for vertical rhythm
-- Inputs: Border radius 6-12px, border color `#ccc`/`#ddd`
-- Buttons: Full-width, rounded, clear visual hierarchy
+- Inputs: Border radius 6-10px, use `Colors.border`, add `placeholderTextColor={Colors.textTertiary}`
+- Buttons: Full-width, rounded (8-12px), high contrast with red accent
 
 ## Next Steps for SQLite Integration
 
@@ -174,9 +193,7 @@ When implementing SQLite:
 
 ## Known Issues
 
-- `app/(tabs)/index.tsx:68` contains inappropriate placeholder text that should be removed
-- `[week]/index.tsx` is effectively empty (1 line file)
-- `daysPerWeek` param from Step 1 is collected but not used in Step 2
+- `[week]/index.tsx` is effectively empty (1 line file) and not yet implemented
 
 ## Project Configuration
 

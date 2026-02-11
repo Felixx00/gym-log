@@ -1,30 +1,43 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * GymLog Color Palette - Dark, minimalist, elegant theme
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+  // Backgrounds
+  background: '#0F0F0F',      // Main background - deep dark
+  surface: '#1A1A1A',         // Cards, elevated surfaces
+  surfaceElevated: '#242424', // Higher elevation surfaces
+
+  // Text
+  text: '#FAFAFA',            // Alias for textPrimary (for themed components)
+  textPrimary: '#FAFAFA',     // Main text - off-white
+  textSecondary: '#9E9E9E',   // Secondary text - muted gray
+  textTertiary: '#666666',    // Tertiary text - darker gray
+
+  // Accents
+  accent: '#DC3545',          // Red accent - elegant, muted red for contrast
+  accentHover: '#C92A38',     // Darker red for hover/press states
+  primary: '#FFFFFF',         // Secondary actions - pure white
+  primaryMuted: '#E8E8E8',    // Muted primary
+  tint: '#DC3545',            // Alias for accent (for themed components)
+
+  // Borders & Dividers
+  border: '#2A2A2A',          // Subtle borders
+  borderLight: '#333333',     // Slightly more visible borders
+
+  // Icons
+  icon: '#9E9E9E',            // Alias for textSecondary (for themed components)
+
+  // Functional
+  success: '#4CAF50',         // Success states
+  error: '#F44336',           // Error states
+  warning: '#FFA726',         // Warning states
+
+  // Tab bar
+  tabIconDefault: '#666666',
+  tabIconSelected: '#DC3545', // Red accent for selected tab
 };
 
 export const Fonts = Platform.select({

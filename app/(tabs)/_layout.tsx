@@ -1,13 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { Colors } from '@/constants/theme';
+
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+        },
+        tabBarActiveTintColor: Colors.tabIconSelected,
+        tabBarInactiveTintColor: Colors.tabIconDefault,
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} /> }} />
-      <Tabs.Screen name="create" options={{ title: 'Create', tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={28} color={color} /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="grid" size={24} color={color} /> }} />
+      <Tabs.Screen name="create" options={{ title: 'Builder', tabBarIcon: ({ color }) => <Ionicons name="construct" size={24} color={color} /> }} />
     </Tabs>
   );
 }

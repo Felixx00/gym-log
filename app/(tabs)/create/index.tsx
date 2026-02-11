@@ -2,6 +2,8 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
+import { Colors } from '@/constants/theme'
+
 export default function CreateScreen() {
   const router = useRouter()
 
@@ -28,6 +30,7 @@ export default function CreateScreen() {
 
       <TextInput
         placeholder="Program name"
+        placeholderTextColor={Colors.textTertiary}
         value={name}
         onChangeText={setName}
         style={styles.input}
@@ -35,6 +38,7 @@ export default function CreateScreen() {
 
       <TextInput
         placeholder="Duration (weeks)"
+        placeholderTextColor={Colors.textTertiary}
         value={duration}
         onChangeText={setDuration}
         keyboardType="number-pad"
@@ -43,6 +47,7 @@ export default function CreateScreen() {
 
       <TextInput
         placeholder="Days per week"
+        placeholderTextColor={Colors.textTertiary}
         value={daysPerWeek}
         onChangeText={setDaysPerWeek}
         keyboardType="number-pad"
@@ -60,31 +65,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   title: {
     fontSize: 28,
     fontWeight: '600',
     marginBottom: 24,
     marginTop: 20,
+    color: Colors.textPrimary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: Colors.border,
     borderRadius: 10,
     padding: 14,
     marginBottom: 16,
     fontSize: 16,
+    backgroundColor: Colors.surface,
+    color: Colors.textPrimary,
   },
   button: {
-    backgroundColor: '#000',
+    backgroundColor: Colors.accent,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: Colors.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
