@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
@@ -26,37 +27,46 @@ export default function CreateScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create a Program</Text>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Ionicons name="barbell" size={48} color={Colors.accent} />
+          <Text style={styles.title}>Build a Program</Text>
+          <Text style={styles.subtitle}>Design your workout plan</Text>
+          <View style={styles.separator} />
+        </View>
 
-      <TextInput
-        placeholder="Program name"
-        placeholderTextColor={Colors.textTertiary}
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Program name"
+          placeholderTextColor={Colors.textTertiary}
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
 
-      <TextInput
-        placeholder="Duration (weeks)"
-        placeholderTextColor={Colors.textTertiary}
-        value={duration}
-        onChangeText={setDuration}
-        keyboardType="number-pad"
-        style={styles.input}
-      />
+        <View style={styles.row}>
+          <TextInput
+            placeholder="Weeks"
+            placeholderTextColor={Colors.textTertiary}
+            value={duration}
+            onChangeText={setDuration}
+            keyboardType="number-pad"
+            style={[styles.input, styles.inputHalf]}
+          />
 
-      <TextInput
-        placeholder="Days per week"
-        placeholderTextColor={Colors.textTertiary}
-        value={daysPerWeek}
-        onChangeText={setDaysPerWeek}
-        keyboardType="number-pad"
-        style={styles.input}
-      />
+          <TextInput
+            placeholder="Days/Week"
+            placeholderTextColor={Colors.textTertiary}
+            value={daysPerWeek}
+            onChangeText={setDaysPerWeek}
+            keyboardType="number-pad"
+            style={[styles.input, styles.inputHalf]}
+          />
+        </View>
 
-      <Pressable style={styles.button} onPress={handleNext}>
-        <Text style={styles.buttonText}>Next</Text>
-      </Pressable>
+        <Pressable style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>Next</Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
@@ -64,15 +74,39 @@ export default function CreateScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: Colors.background,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  content: {
+    width: '100%',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '600',
-    marginBottom: 24,
-    marginTop: 20,
+    fontSize: 32,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
     color: Colors.textPrimary,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  separator: {
+    width: '40%',
+    maxWidth: 180,
+    height: 2,
+    backgroundColor: Colors.accent,
+    marginTop: 20,
+    opacity: 0.6,
   },
   input: {
     borderWidth: 1,
@@ -83,6 +117,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: Colors.surface,
     color: Colors.textPrimary,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  inputHalf: {
+    flex: 1,
   },
   button: {
     backgroundColor: Colors.accent,
