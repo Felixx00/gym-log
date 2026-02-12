@@ -28,43 +28,66 @@ export default function CreateScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
+        {/* Header with watermark */}
         <View style={styles.header}>
-          <Ionicons name="barbell" size={48} color={Colors.accent} />
-          <Text style={styles.title}>Build a Program</Text>
-          <Text style={styles.subtitle}>Design your workout plan</Text>
+          <Ionicons
+            name="construct-outline"
+            size={240}
+            color={Colors.surfaceElevated}
+            style={styles.watermark}
+          />
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Build a </Text>
+            <Text style={[styles.title, styles.titleAccent]}>Program</Text>
+          </View>
+          <Text style={styles.subtitle}>
+            Design your structured workout{'\n'}plan and track your evolution.
+          </Text>
           <View style={styles.separator} />
         </View>
 
-        <TextInput
-          placeholder="Program name"
-          placeholderTextColor={Colors.textTertiary}
-          value={name}
-          onChangeText={setName}
-          style={styles.input}
-        />
-
-        <View style={styles.row}>
+        {/* Inputs */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>PROGRAM NAME</Text>
           <TextInput
-            placeholder="Weeks"
+            placeholder="Push Pull Legs System"
             placeholderTextColor={Colors.textTertiary}
-            value={duration}
-            onChangeText={setDuration}
-            keyboardType="number-pad"
-            style={[styles.input, styles.inputHalf]}
-          />
-
-          <TextInput
-            placeholder="Days/Week"
-            placeholderTextColor={Colors.textTertiary}
-            value={daysPerWeek}
-            onChangeText={setDaysPerWeek}
-            keyboardType="number-pad"
-            style={[styles.input, styles.inputHalf]}
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
           />
         </View>
 
-        <Pressable style={styles.button} onPress={handleNext}>
+        <View style={styles.row}>
+          <View style={styles.inputGroupHalf}>
+            <Text style={styles.label}>WEEKS</Text>
+            <TextInput
+              placeholder="12"
+              placeholderTextColor={Colors.textTertiary}
+              value={duration}
+              onChangeText={setDuration}
+              keyboardType="number-pad"
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.inputGroupHalf}>
+            <Text style={styles.label}>DAYS / WEEK</Text>
+            <TextInput
+              placeholder="5"
+              placeholderTextColor={Colors.textTertiary}
+              value={daysPerWeek}
+              onChangeText={setDaysPerWeek}
+              keyboardType="number-pad"
+              style={styles.input}
+            />
+          </View>
+        </View>
+
+        {/* Button */}
+        <Pressable onPress={handleNext} style={styles.button}>
           <Text style={styles.buttonText}>Next</Text>
+          <Ionicons name="arrow-forward" size={18} color={Colors.textPrimary} />
         </Pressable>
       </View>
     </View>
@@ -75,66 +98,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+    padding: 24,
     justifyContent: 'center',
-    padding: 20,
   },
   content: {
     width: '100%',
   },
+
+  // Header
   header: {
+    marginBottom: 48,
+  },
+  watermark: {
+    position: 'absolute',
+    top: -60,
+    left: -30,
+    opacity: 0.3,
+  },
+  titleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
     color: Colors.textPrimary,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+  },
+  titleAccent: {
+    color: '#DF1B46',
+    fontWeight: '800',
   },
   subtitle: {
     fontSize: 15,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.3,
+    lineHeight: 22,
+    letterSpacing: 0.2,
   },
   separator: {
-    width: '40%',
-    maxWidth: 180,
-    height: 2,
-    backgroundColor: Colors.accent,
+    width: 40,
+    height: 3,
+    backgroundColor: '#C91A41',
     marginTop: 20,
-    opacity: 0.6,
+    borderRadius: 2,
+  },
+
+  // Inputs
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputGroupHalf: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    letterSpacing: 1.2,
+    marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     color: Colors.textPrimary,
   },
   row: {
     flexDirection: 'row',
     gap: 12,
+    marginBottom: 20,
   },
-  inputHalf: {
-    flex: 1,
-  },
+
+  // Button
   button: {
-    backgroundColor: Colors.accent,
-    padding: 16,
-    borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    paddingVertical: 22,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    gap: 8,
+    backgroundColor: '#E11D48',
+    marginTop: 16,
   },
   buttonText: {
     color: Colors.textPrimary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 })

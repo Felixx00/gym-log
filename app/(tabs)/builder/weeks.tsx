@@ -317,7 +317,15 @@ export default function Weeks() {
                     return (
                         <Pressable
                             key={week.id}
-                            onPress={() => setActiveWeek(i + 1)}
+                            onPress={() => {
+                                setActiveWeek(i + 1);
+                                setWeekData((prev) =>
+                                    prev.map((w) => ({
+                                        ...w,
+                                        days: w.days.map((d) => ({ ...d, isOpen: false })),
+                                    }))
+                                );
+                            }}
                             style={[
                                 styles.weekPill,
                                 isActive && styles.weekPillActive,
