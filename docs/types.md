@@ -1,0 +1,63 @@
+# Data Types
+
+Defined in `components/builder/types.ts`. Exported via `components/builder/index.ts`.
+
+## Core Types
+
+```typescript
+type Set = {
+    id: string;
+    rir?: number;           // planned Reps in Reserve
+    technique?: string;     // notes
+    weight?: number;        // actual weight (future: logging)
+    repsDone?: number;      // actual reps (future: logging)
+    rirDone?: number;       // actual RIR (future: logging)
+};
+
+type Exercise = {
+    id: string;
+    name: string;
+    repRange: string;       // e.g. "8-12"
+    sets: Set[];
+};
+
+type Day = {
+    id: string;
+    defaultName: string;    // "Day 1", "Day 2"...
+    customName: string;     // user-defined name
+    isOpen: boolean;        // UI-only accordion state (NOT persisted)
+    exercises: Exercise[];
+    completed?: boolean;    // future: workout logging
+    completedAt?: string;   // future: ISO date
+};
+
+type Week = {
+    id: string;
+    name: string;           // "Week 1", "Week 2"...
+    days: Day[];
+};
+
+type ProgramSummary = {
+    id: number;             // DB integer ID
+    name: string;
+    duration: number;       // total weeks
+    daysPerWeek: number;
+    createdAt: string;      // ISO timestamp
+};
+```
+
+## ID Strategy
+
+- In-memory: temporary string IDs (`week-1`, `day-1`, `ex-{timestamp}`, `set-{timestamp}`)
+- After DB save: numeric IDs converted to strings (`String(row.id)`)
+- `ProgramSummary.id` is always `number` (always from DB)
+
+## Hierarchy
+
+```
+Program (metadata only, not a type — passed as params)
+  └── Week[]
+        └── Day[]
+              └── Exercise[]
+                    └── Set[]
+```

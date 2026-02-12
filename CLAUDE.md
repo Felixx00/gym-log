@@ -4,200 +4,97 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GymLog is a mobile workout tracker application built with React Native and Expo. The app enables users to create workout programs, manage them, track workout history, and log daily workout sessions. SQLite is planned for local data persistence.
+GymLog is a mobile workout tracker built with React Native and Expo. Users create workout program templates via the Builder, which are persisted locally with SQLite. A workout logging page (for tracking actual sets/reps/weight during sessions) is planned but not yet implemented.
 
 ## Development Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server (choose platform from menu)
-npm start
-
-# Start on specific platform
-npm run android
-npm run ios
-npm run web
-
-# Linting
-npm run lint
-
-# Reset project (moves current app to app-example)
-npm run reset-project
+npm install          # Install dependencies
+npm start            # Start dev server (choose platform)
+npm run android      # Start on Android
+npm run ios          # Start on iOS
+npm run web          # Start on web
+npm run lint         # Linting
 ```
 
 ## Technology Stack
 
 - **Framework**: React Native 0.81.5 with Expo SDK 54
-- **Language**: TypeScript (strict mode enabled)
+- **Language**: TypeScript (strict mode)
 - **Navigation**: Expo Router (file-based routing)
-- **UI Libraries**:
-  - React Navigation for tab/stack navigation
-  - Expo Vector Icons (Ionicons)
-  - React Native Reanimated & Gesture Handler
-- **Theming**: Custom dark theme (single theme, no light/dark switching)
-- **Planned**: SQLite for local database (not yet implemented)
+- **Database**: SQLite via `expo-sqlite` (local persistence)
+- **UI**: React Navigation, Expo Vector Icons (Ionicons), Reanimated & Gesture Handler
+- **Theming**: Single dark theme — `constants/theme.ts`
 
 ## Architecture
 
-### Routing Structure
-
-The app uses Expo Router's file-based routing with the following hierarchy:
-
 ```
 app/
-├── _layout.tsx              # Root layout with theme provider
-├── (tabs)/                  # Tab navigator group
-│   ├── _layout.tsx          # Tab bar configuration (Dashboard, Builder)
-│   ├── index.tsx            # Dashboard tab screen
-│   └── builder/             # Builder workflow (stack navigation)
-│       ├── _layout.tsx      # Stack navigator for builder flow
-│       ├── index.tsx        # Step 1: Program metadata (name, duration, days/week)
-│       ├── weeks.tsx        # Step 2: Build weeks/days/exercises
-│       └── [week]/          # Dynamic route (currently minimal)
-│           └── index.tsx
-└── modal.tsx                # Example modal screen
+├── _layout.tsx                  # Root layout (theme + DB init)
+├── (tabs)/
+│   ├── _layout.tsx              # Tab bar (Dashboard, Builder)
+│   ├── index.tsx                # Dashboard: program list from DB
+│   └── builder/
+│       ├── _layout.tsx          # Stack navigator
+│       ├── index.tsx            # Step 1: program metadata
+│       └── weeks.tsx            # Step 2: build weeks/days/exercises
+├── modal.tsx
+services/
+└── database.ts                  # SQLite service layer (all DB logic)
+components/
+└── builder/
+    ├── types.ts                 # Set, Exercise, Day, Week, ProgramSummary
+    ├── DaySection.tsx           # Day accordion component
+    ├── ExerciseCard.tsx         # Exercise editing card
+    └── index.ts                 # Barrel exports
+constants/
+└── theme.ts                     # Color palette
+docs/
+├── database.md                  # Schema, migrations, service API
+└── types.md                     # Data type definitions and hierarchy
 ```
 
-### Navigation Flow
+### Key Flows
 
-1. **Dashboard Tab** (`(tabs)/index.tsx`): Welcome screen with placeholder content for future program listings
-2. **Builder Tab** (`(tabs)/builder/`): Multi-step program creation
-   - `index.tsx`: Collects program name, duration (weeks), and days per week
-   - `weeks.tsx`: Main program builder - allows users to:
-     - Switch between weeks via horizontal tabs
-     - Add exercises to each day (dynamically based on user input)
-     - Configure exercise details: name, sets, reps, RIR (Reps in Reserve), technique
-
-### Data Structure (In-Memory Only)
-
-Currently, all data is managed in component state. Key types defined in `weeks.tsx`:
-
-```typescript
-type Exercise = {
-  id: string;
-  name: string;
-  sets: number;
-  reps: string;  // Allows flexible formats like "8-10"
-  rir?: number;  // Reps in Reserve
-  technique?: string;
-}
-
-type Day = {
-  id: string;
-  name: string;
-  exercises: Exercise[];
-}
-
-type Week = {
-  id: string;
-  name: string;
-  days: Day[];  // Currently always 7 days
-}
-```
-
-**Important**: Data is NOT persisted yet. Navigating away loses all program data.
+- **Builder**: `builder/index.tsx` collects name/weeks/days → pushes to `weeks.tsx` → user builds program → Save writes full tree to SQLite in one transaction → redirects to Dashboard
+- **Dashboard**: loads program list on focus → tap to edit (passes `programId`) → delete with confirmation
+- **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
 
 ### Path Aliasing
 
-The project uses `@/` as an alias for the root directory:
+`@/` maps to root directory. Configured in `tsconfig.json`.
 
-```typescript
-import { HelloWave } from '@/components/hello-wave';
-import { Colors } from '@/constants/theme';
-```
+## Theming & Styling
 
-Configured in `tsconfig.json` via `"paths": { "@/*": ["./*"] }`.
+Single dark theme. All colors in `constants/theme.ts` — never hardcode colors.
 
-### Theming System
+**Key colors**: Background `#0F0F0F` · Surface `#1A1A1A` · Elevated `#242424` · Accent `#E11D48` · Text `#FAFAFA` / `#9E9E9E` / `#666666` · Border `#2A2A2A`
 
-The app uses a **single dark theme** - no light/dark mode switching:
+**Builder-specific reds**: Title text `#DF1B46` · Separator `#C91A41` · Button `#E11D48`
 
-- `constants/theme.ts`: All color definitions in one place
-- Dark, minimalist, elegant palette with red accent for contrast
-- Root layout (`app/_layout.tsx`) applies custom GymLogTheme to React Navigation
-- All screens import and use `Colors` directly from `@/constants/theme`
+**Conventions**:
+- `StyleSheet.create()` at bottom of files
+- `Colors.accent` for primary actions, `Colors.primary` for secondary
+- Inputs: `surfaceElevated` bg, no border, `borderRadius: 12`, `placeholderTextColor={Colors.textTertiary}`
+- Functional components with hooks, types at top of file
 
-**Color Palette**:
-- Background: `#0F0F0F` (deep dark)
-- Surface: `#1A1A1A` (cards, elevated surfaces)
-- Surface Elevated: `#242424` (higher elevation)
-- Text Primary: `#FAFAFA` (off-white)
-- Text Secondary: `#9E9E9E` (muted gray)
-- Text Tertiary: `#666666` (darker gray)
-- **Accent: `#E11D48` (vibrant red for primary actions)**
-- Primary: `#FFFFFF` (pure white for secondary actions)
-- Border: `#2A2A2A` (subtle borders)
+## Database
 
-## Key Implementation Details
+SQLite via `expo-sqlite`. Service layer in `services/database.ts`. See `docs/database.md` for schema, migrations, and API details.
 
-### Builder Workflow State Management
+**5 tables**: `programs` → `weeks` → `days` → `exercises` → `sets` (all CASCADE delete)
 
-The builder flow uses URL params to pass data between screens:
+Program names must be unique. Logging fields (`weight`, `reps_done`, `rir_done`, `completed`, `completed_at`) exist in schema but are unused by the builder — reserved for future workout logging page.
 
-```typescript
-// Step 1 (builder/index.tsx) navigates to Step 2:
-router.push({
-  pathname: '/builder/weeks',
-  params: { name, duration, daysPerWeek }
-});
+## Current Limitations
 
-// Step 2 (weeks.tsx) reads params:
-const { name, duration, daysPerWeek } = useLocalSearchParams();
-const totalDays = Number(daysPerWeek ?? 7); // Creates dynamic number of days
-```
-
-State within `weeks.tsx` uses complex nested updates to modify exercises/days/weeks immutably. The number of days per week is dynamically created based on user input.
-
-### Current Limitations
-
-1. **No data persistence**: SQLite integration is planned but not implemented
-2. **No validation**: Users can save incomplete or invalid exercise data
-3. **No edit mode**: Cannot edit previously saved programs
-4. **No program list**: Cannot view or select previously created programs
-
-## Development Patterns
-
-### Component Structure
-
-- Use functional components with hooks
-- Inline styles via `StyleSheet.create()` at bottom of files
-- Separate types/interfaces at top when complex state is involved
-- Group related state and handlers with comments
-
-### Styling Conventions
-
-- Colors: Import from `@/constants/theme` - NEVER hardcode colors
-- Backgrounds: Use `Colors.background`, `Colors.surface`, `Colors.surfaceElevated` for depth
-- Text: Use `Colors.textPrimary`, `Colors.textSecondary`, `Colors.textTertiary` for hierarchy
-- Actions:
-  - `Colors.accent` (red) for primary buttons and CTAs
-  - `Colors.primary` (white) for secondary actions
-  - Button text: `Colors.textPrimary` on accent backgrounds
-- Active states: Use `Colors.accent` for selected tabs, active weeks, etc.
-- Spacing: Consistent padding (10-20px), margin bottom for vertical rhythm
-- Inputs: Border radius 6-10px, use `Colors.border`, add `placeholderTextColor={Colors.textTertiary}`
-- Buttons: Full-width, rounded (8-12px), high contrast with red accent
-
-## Next Steps for SQLite Integration
-
-When implementing SQLite:
-
-1. Install: `expo install expo-sqlite`
-2. Create database schema for Programs, Weeks, Days, Exercises
-3. Add database service layer (e.g., `services/database.ts`)
-4. Replace state management in `weeks.tsx` with database operations
-5. Add program listing screen on Home tab
-6. Implement program selection/editing/deletion
-
-## Known Issues
-
-- `[week]/index.tsx` is effectively empty (1 line file) and not yet implemented
+1. **No workout logging**: Builder creates templates only. No page yet for entering actual workout data (weight, reps, RIR)
+2. **No validation**: Users can save incomplete exercise data
+3. **No web support for DB**: `expo-sqlite` doesn't work on web
 
 ## Project Configuration
 
-- **Strict TypeScript**: Enabled in `tsconfig.json`
-- **New Architecture**: Expo's new architecture is enabled (`newArchEnabled: true`)
-- **Experiments**: React Compiler and typed routes are enabled
-- **URL Scheme**: `gymlog://` for deep linking
+- **Strict TypeScript** enabled
+- **New Architecture** enabled (`newArchEnabled: true`)
+- **Experiments**: React Compiler + typed routes enabled
+- **URL Scheme**: `gymlog://`

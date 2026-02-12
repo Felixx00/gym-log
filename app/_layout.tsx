@@ -1,9 +1,14 @@
 import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
+import { initDatabase } from '@/services/database';
+
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -41,6 +46,17 @@ const GymLogTheme = {
 };
 
 export default function RootLayout() {
+  const [dbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    initDatabase()
+      .then(() => setDbReady(true))
+      .catch(console.error)
+      .finally(() => SplashScreen.hideAsync());
+  }, []);
+
+  if (!dbReady) return null;
+
   return (
     <ThemeProvider value={GymLogTheme}>
       <Stack>

@@ -2,6 +2,9 @@ export type Set = {
     id: string;
     rir?: number;
     technique?: string;
+    weight?: number;
+    repsDone?: number;
+    rirDone?: number;
 };
 
 export type Exercise = {
@@ -17,10 +20,20 @@ export type Day = {
     customName: string;
     isOpen: boolean;
     exercises: Exercise[];
+    completed?: boolean;
+    completedAt?: string;
 };
 
 export type Week = {
     id: string;
     name: string;
     days: Day[];
+};
+
+export type ProgramSummary = {
+    id: number;
+    name: string;
+    duration: number;
+    daysPerWeek: number;
+    createdAt: string;
 };

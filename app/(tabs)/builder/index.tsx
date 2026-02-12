@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useFocusEffect, useRouter } from 'expo-router'
+import { useCallback, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { Colors } from '@/constants/theme'
@@ -11,6 +11,14 @@ export default function CreateScreen() {
   const [name, setName] = useState('')
   const [duration, setDuration] = useState('')
   const [daysPerWeek, setDaysPerWeek] = useState('')
+
+  useFocusEffect(
+    useCallback(() => {
+      setName('')
+      setDuration('')
+      setDaysPerWeek('')
+    }, [])
+  )
 
   const handleNext = () => {
     if (!name || !duration || !daysPerWeek) return

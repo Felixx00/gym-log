@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     Modal,
     Pressable,
     ScrollView,
@@ -12,36 +14,65 @@ import {
 
 import { DaySection, Exercise, Set, Week } from '@/components/builder';
 import { Colors } from '@/constants/theme';
+import { saveProgram as saveProgramToDb, loadProgram } from '@/services/database';
 
 export default function Weeks() {
-    const { name, duration, daysPerWeek } = useLocalSearchParams<{
+    const params = useLocalSearchParams<{
         name?: string;
         duration?: string;
         daysPerWeek?: string;
+        programId?: string;
     }>();
 
-    const totalWeeks = Number(duration ?? 1);
-    const totalDays = Number(daysPerWeek ?? 7);
+    const totalWeeks = Number(params.duration ?? 1);
+    const totalDays = Number(params.daysPerWeek ?? 7);
 
     // ---------------- State ----------------
+    const [programName, setProgramName] = useState(params.name || 'Program');
+    const [programId, setProgramId] = useState<number | undefined>(
+        params.programId ? Number(params.programId) : undefined
+    );
     const [activeWeek, setActiveWeek] = useState(1);
     const [showSyncModal, setShowSyncModal] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(!!params.programId);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [saveModal, setSaveModal] = useState<{ title: string; message: string } | null>(null);
 
     const [weekData, setWeekData] = useState<Week[]>(
-        Array.from({ length: totalWeeks }, (_, w) => ({
-            id: `week-${w + 1}`,
-            name: `Week ${w + 1}`,
-            days: Array.from({ length: totalDays }, (_, d) => ({
-                id: `day-${d + 1}`,
-                defaultName: `Day ${d + 1}`,
-                customName: '',
-                isOpen: false,
-                exercises: [],
-            })),
-        }))
+        params.programId
+            ? [] // Will be populated by loadProgram
+            : Array.from({ length: totalWeeks }, (_, w) => ({
+                  id: `week-${w + 1}`,
+                  name: `Week ${w + 1}`,
+                  days: Array.from({ length: totalDays }, (_, d) => ({
+                      id: `day-${d + 1}`,
+                      defaultName: `Day ${d + 1}`,
+                      customName: '',
+                      isOpen: false,
+                      exercises: [],
+                  })),
+              }))
     );
 
     const activeWeekObj = weekData[activeWeek - 1];
+
+    // Load existing program from DB
+    useEffect(() => {
+        if (!params.programId) return;
+        loadProgram(Number(params.programId))
+            .then((data) => {
+                setProgramName(data.name);
+                setWeekData(data.weeks);
+                setProgramId(Number(params.programId));
+            })
+            .catch((err) => {
+                console.error(err);
+                Alert.alert('Error', 'Failed to load program.');
+                router.back();
+            })
+            .finally(() => setIsLoading(false));
+    }, [params.programId]);
 
     // ---------------- Handlers ----------------
     const toggleDay = (dayId: string) => {
@@ -277,12 +308,43 @@ export default function Weeks() {
         setShowSyncModal(false);
     };
 
-    const saveProgram = () => {
-        // TODO: Implement save to database
-        console.log('Saving program...', weekData);
+    const handleSave = () => {
+        setShowSaveConfirm(true);
+    };
+
+    const confirmSave = async () => {
+        setShowSaveConfirm(false);
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            const id = await saveProgramToDb(
+                programName,
+                totalWeeks,
+                totalDays,
+                weekData,
+                programId
+            );
+            setProgramId(id);
+            setSaveModal({ title: 'Saved', message: 'Program saved successfully.' });
+        } catch (error: any) {
+            const msg = error?.message?.includes('UNIQUE')
+                ? 'A program with this name already exists.'
+                : 'Failed to save program.';
+            setSaveModal({ title: 'Error', message: msg });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // ---------------- Render ----------------
+    if (isLoading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={Colors.accent} />
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -291,7 +353,7 @@ export default function Weeks() {
                     <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
                 </Pressable>
                 <View style={styles.headerLeft}>
-                    <Text style={styles.title} numberOfLines={1}>{name || 'Program'}</Text>
+                    <Text style={styles.title} numberOfLines={1}>{programName}</Text>
                     <Text style={styles.subtitle}>{totalDays} days/week</Text>
                 </View>
                 <View style={styles.headerRight}>
@@ -299,8 +361,14 @@ export default function Weeks() {
                         <Ionicons name="sync-outline" size={16} color={Colors.textPrimary} />
                         <Text style={styles.syncButtonText}>Sync</Text>
                     </Pressable>
-                    <Pressable style={styles.saveButton} onPress={saveProgram}>
-                        <Text style={styles.saveButtonText}>Save</Text>
+                    <Pressable
+                        style={[styles.saveButton, isSaving && { opacity: 0.6 }]}
+                        onPress={handleSave}
+                        disabled={isSaving}
+                    >
+                        <Text style={styles.saveButtonText}>
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Text>
                     </Pressable>
                 </View>
             </View>
@@ -401,6 +469,65 @@ export default function Weeks() {
                                 <Text style={styles.modalConfirmButtonText}>Sync</Text>
                             </Pressable>
                         </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Save Confirmation Modal */}
+            <Modal
+                visible={showSaveConfirm}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowSaveConfirm(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Save Program</Text>
+                        <Text style={styles.modalMessage}>
+                            Are you sure you want to save "{programName}"?
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <Pressable
+                                style={styles.modalCancelButton}
+                                onPress={() => setShowSaveConfirm(false)}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+                            </Pressable>
+                            <Pressable
+                                style={styles.modalConfirmButton}
+                                onPress={confirmSave}
+                            >
+                                <Text style={styles.modalConfirmButtonText}>Save</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Save Feedback Modal */}
+            <Modal
+                visible={!!saveModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setSaveModal(null)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>{saveModal?.title}</Text>
+                        <Text style={styles.modalMessage}>{saveModal?.message}</Text>
+                        <Pressable
+                            style={styles.modalSingleButton}
+                            onPress={() => {
+                                const wasSuccess = saveModal?.title === 'Saved';
+                                setSaveModal(null);
+                                if (wasSuccess) {
+                                    router.back();
+                                    router.navigate('/');
+                                }
+                            }}
+                        >
+                            <Text style={styles.modalConfirmButtonText}>OK</Text>
+                        </Pressable>
                     </View>
                 </View>
             </Modal>
@@ -572,5 +699,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: Colors.textPrimary,
+    },
+    modalSingleButton: {
+        width: '100%',
+        paddingVertical: 12,
+        borderRadius: 8,
+        backgroundColor: Colors.accent,
+        alignItems: 'center',
     },
 });
