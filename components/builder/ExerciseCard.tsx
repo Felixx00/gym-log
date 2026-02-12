@@ -51,7 +51,7 @@ export function ExerciseCard({
                     <Ionicons
                         name="trash-outline"
                         size={18}
-                        color={Colors.error}
+                        color="#465468"
                     />
                 </Pressable>
             </View>
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     },
     setsHeaderRir: {
         width: 50,
-        textAlign: 'center',
+        textAlign: 'left',
         marginLeft: 24,
     },
     setsHeaderTechnique: {

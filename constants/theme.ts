@@ -17,11 +17,11 @@ export const Colors = {
   textTertiary: '#666666',    // Tertiary text - darker gray
 
   // Accents
-  accent: '#DC3545',          // Red accent - elegant, muted red for contrast
-  accentHover: '#C92A38',     // Darker red for hover/press states
+  accent: '#E11D48',          // Red accent - vibrant red for contrast
+  accentHover: '#C91A41',     // Darker red for hover/press states
   primary: '#FFFFFF',         // Secondary actions - pure white
   primaryMuted: '#E8E8E8',    // Muted primary
-  tint: '#DC3545',            // Alias for accent (for themed components)
+  tint: '#E11D48',            // Alias for accent (for themed components)
 
   // Borders & Dividers
   border: '#2A2A2A',          // Subtle borders
@@ -37,7 +37,7 @@ export const Colors = {
 
   // Tab bar
   tabIconDefault: '#666666',
-  tabIconSelected: '#DC3545', // Red accent for selected tab
+  tabIconSelected: '#E11D48', // Red accent for selected tab
 };
 
 export const Fonts = Platform.select({

@@ -72,8 +72,10 @@ export function DaySection({
             </Pressable>
 
             {/* Day Content (Exercises) */}
-            {day.isOpen && (
+            {day.isOpen && (<>
+                <View style={styles.dayDivider} />
                 <View style={styles.dayContent}>
+
                     {day.exercises.map((exercise) => (
                         <ExerciseCard
                             key={exercise.id}
@@ -98,7 +100,7 @@ export function DaySection({
                         <Text style={styles.addExerciseButtonText}>Add Exercise</Text>
                     </Pressable>
                 </View>
-            )}
+            </>)}
         </View>
     );
 }
@@ -106,25 +108,22 @@ export function DaySection({
 const styles = StyleSheet.create({
     daySection: {
         marginBottom: 10,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'transparent',
+        borderRadius: 14,
+        backgroundColor: Colors.surface,
+        overflow: 'hidden',
     },
-    daySectionOpen: {
-        borderColor: Colors.accent,
-    },
+    daySectionOpen: {},
     dayHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
         backgroundColor: Colors.surface,
-        borderRadius: 12,
+        borderRadius: 14,
     },
     dayHeaderOpen: {
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
-        backgroundColor: Colors.surfaceElevated,
     },
     dayHeaderContent: {
         flex: 1,
@@ -158,21 +157,24 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         marginTop: 4,
     },
+    dayDivider: {
+        height: 1,
+        backgroundColor: Colors.border,
+        marginHorizontal: 16,
+    },
     dayContent: {
         backgroundColor: Colors.surface,
-        padding: 12,
+        padding: 14,
         gap: 12,
-        borderBottomLeftRadius: 12,
-        borderBottomRightRadius: 12,
     },
     addExerciseButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        padding: 12,
+        gap: 8,
+        paddingVertical: 16,
         backgroundColor: Colors.accent,
-        borderRadius: 10,
+        borderRadius: 12,
     },
     addExerciseButtonText: {
         fontSize: 14,

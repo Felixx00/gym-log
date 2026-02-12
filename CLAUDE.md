@@ -36,7 +36,7 @@ npm run reset-project
   - React Navigation for tab/stack navigation
   - Expo Vector Icons (Ionicons)
   - React Native Reanimated & Gesture Handler
-- **Theming**: Custom theme system with light/dark mode support
+- **Theming**: Custom dark theme (single theme, no light/dark switching)
 - **Planned**: SQLite for local database (not yet implemented)
 
 ## Architecture
@@ -51,7 +51,7 @@ app/
 ├── (tabs)/                  # Tab navigator group
 │   ├── _layout.tsx          # Tab bar configuration (Dashboard, Builder)
 │   ├── index.tsx            # Dashboard tab screen
-│   └── create/              # Builder workflow (stack navigation)
+│   └── builder/             # Builder workflow (stack navigation)
 │       ├── _layout.tsx      # Stack navigator for builder flow
 │       ├── index.tsx        # Step 1: Program metadata (name, duration, days/week)
 │       ├── weeks.tsx        # Step 2: Build weeks/days/exercises
@@ -63,7 +63,7 @@ app/
 ### Navigation Flow
 
 1. **Dashboard Tab** (`(tabs)/index.tsx`): Welcome screen with placeholder content for future program listings
-2. **Builder Tab** (`(tabs)/create/`): Multi-step program creation
+2. **Builder Tab** (`(tabs)/builder/`): Multi-step program creation
    - `index.tsx`: Collects program name, duration (weeks), and days per week
    - `weeks.tsx`: Main program builder - allows users to:
      - Switch between weeks via horizontal tabs
@@ -126,7 +126,7 @@ The app uses a **single dark theme** - no light/dark mode switching:
 - Text Primary: `#FAFAFA` (off-white)
 - Text Secondary: `#9E9E9E` (muted gray)
 - Text Tertiary: `#666666` (darker gray)
-- **Accent: `#DC3545` (elegant red for primary actions)**
+- **Accent: `#E11D48` (vibrant red for primary actions)**
 - Primary: `#FFFFFF` (pure white for secondary actions)
 - Border: `#2A2A2A` (subtle borders)
 
@@ -137,9 +137,9 @@ The app uses a **single dark theme** - no light/dark mode switching:
 The builder flow uses URL params to pass data between screens:
 
 ```typescript
-// Step 1 (create/index.tsx) navigates to Step 2:
+// Step 1 (builder/index.tsx) navigates to Step 2:
 router.push({
-  pathname: '/create/weeks',
+  pathname: '/builder/weeks',
   params: { name, duration, daysPerWeek }
 });
 
@@ -154,7 +154,7 @@ State within `weeks.tsx` uses complex nested updates to modify exercises/days/we
 
 1. **No data persistence**: SQLite integration is planned but not implemented
 2. **No validation**: Users can save incomplete or invalid exercise data
-3. **No edit/delete**: Cannot remove exercises or navigate back without losing data
+3. **No edit mode**: Cannot edit previously saved programs
 4. **No program list**: Cannot view or select previously created programs
 
 ## Development Patterns
