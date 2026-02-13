@@ -470,7 +470,14 @@ export default function Weeks() {
                 visible={!!saveModal}
                 title={saveModal?.title ?? ''}
                 message={saveModal?.message ?? ''}
-                onClose={() => setSaveModal(null)}
+                onClose={() => {
+                    const wasSuccess = saveModal?.title === 'Saved';
+                    setSaveModal(null);
+                    if (wasSuccess) {
+                        router.back();
+                        router.navigate('/');
+                    }
+                }}
                 buttons={[{
                     label: 'OK',
                     onPress: () => {
