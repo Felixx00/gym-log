@@ -57,18 +57,28 @@ export default function DashboardScreen() {
 
     const renderProgram = ({ item }: { item: ProgramSummary }) => (
         <Pressable style={styles.card} onPress={() => handleOpen(item)}>
+            <View style={styles.accentBarWrapper}>
+                <View style={styles.accentBar} />
+            </View>
             <View style={styles.cardContent}>
                 <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.cardMeta}>
-                    {item.duration} weeks · {item.daysPerWeek} days/week
-                </Text>
+                <View style={styles.metaRow}>
+                    <View style={styles.metaItem}>
+                        <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
+                        <Text style={styles.metaText}>{item.duration} Weeks</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                        <Ionicons name="barbell-outline" size={14} color={Colors.textSecondary} />
+                        <Text style={styles.metaText}>{item.daysPerWeek} Days / Wk</Text>
+                    </View>
+                </View>
             </View>
             <Pressable
                 style={styles.deleteButton}
                 hitSlop={8}
                 onPress={() => handleDelete(item)}
             >
-                <Ionicons name="trash-outline" size={18} color="#465468" />
+                <Ionicons name="trash-outline" size={20} color={Colors.textTertiary} />
             </Pressable>
         </Pressable>
     );
@@ -76,10 +86,10 @@ export default function DashboardScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>My Programs</Text>
-                <Text style={styles.subtitle}>
-                    {programs.length} {programs.length === 1 ? 'program' : 'programs'}
+                <Text style={styles.title}>
+                    Your <Text style={styles.titleAccent}>Programs</Text>
                 </Text>
+                <Text style={styles.subtitle}>Select a routine to begin</Text>
             </View>
 
             {programs.length === 0 ? (
@@ -110,18 +120,21 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
+        paddingTop: 80,
+        paddingBottom: 36,
     },
     title: {
         fontSize: 28,
         fontWeight: '700',
         color: Colors.textPrimary,
-        marginBottom: 4,
+    },
+    titleAccent: {
+        color: Colors.accent,
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: 15,
         color: Colors.textSecondary,
+        marginTop: 4,
     },
     list: {
         paddingHorizontal: 20,
@@ -132,24 +145,52 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.surface,
         borderRadius: 14,
-        padding: 16,
-        marginBottom: 10,
+        paddingVertical: 24,
+        paddingLeft: 20,
+        paddingRight: 18,
+        marginBottom: 14,
+        overflow: 'hidden',
+    },
+    accentBarWrapper: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        justifyContent: 'flex-start',
+        paddingTop: 18,
+    },
+    accentBar: {
+        width: 3,
+        height: 32,
+        backgroundColor: Colors.accent,
+        borderRadius: 2,
     },
     cardContent: {
         flex: 1,
     },
     cardName: {
-        fontSize: 17,
-        fontWeight: '600',
+        fontSize: 20,
+        fontWeight: '700',
         color: Colors.textPrimary,
-        marginBottom: 4,
+        marginBottom: 20,
     },
-    cardMeta: {
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+    },
+    metaText: {
         fontSize: 13,
         color: Colors.textSecondary,
     },
     deleteButton: {
         padding: 8,
+        alignSelf: 'flex-start',
     },
     emptyState: {
         flex: 1,
