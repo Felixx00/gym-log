@@ -169,15 +169,31 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
     const rows = await db.getAllAsync<{
         id: number;
         name: string;
-        duration: number;
+        week_count: number;
         days_per_week: number;
         created_at: string;
-    }>('SELECT id, name, duration, days_per_week, created_at FROM programs ORDER BY created_at DESC');
+    }>(`
+        SELECT
+            p.id,
+            p.name,
+            COUNT(DISTINCT w.id) AS week_count,
+            COALESCE(MAX(day_counts.day_count), 0) AS days_per_week,
+            p.created_at
+        FROM programs p
+        LEFT JOIN weeks w ON w.program_id = p.id
+        LEFT JOIN (
+            SELECT week_id, COUNT(*) AS day_count
+            FROM days
+            GROUP BY week_id
+        ) day_counts ON day_counts.week_id = w.id
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+    `);
 
     return rows.map((row) => ({
         id: row.id,
         name: row.name,
-        duration: row.duration,
+        duration: row.week_count,
         daysPerWeek: row.days_per_week,
         createdAt: row.created_at,
     }));
@@ -307,6 +323,16 @@ export async function loadProgram(programId: number): Promise<{
 export async function deleteProgram(programId: number): Promise<void> {
     if (!db) throw new Error('Database not initialized');
     await db.runAsync('DELETE FROM programs WHERE id = ?', [programId]);
+}
+
+// ────────────────────────── Mark Day Completed ──────────────────────────
+
+export async function markDayCompleted(dayId: number): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+    await db.runAsync(
+        "UPDATE days SET completed = 1, completed_at = datetime('now') WHERE id = ?",
+        [dayId]
+    );
 }
 
 // ────────────────────────── Validation ──────────────────────────

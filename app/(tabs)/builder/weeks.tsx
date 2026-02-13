@@ -317,10 +317,12 @@ export default function Weeks() {
         if (isSaving) return;
         setIsSaving(true);
         try {
+            const actualWeeks = weekData.length;
+            const actualDays = weekData[0]?.days.length ?? totalDays;
             const id = await saveProgramToDb(
                 programName,
-                totalWeeks,
-                totalDays,
+                actualWeeks,
+                actualDays,
                 weekData,
                 programId
             );

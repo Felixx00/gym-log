@@ -12,9 +12,10 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 |----------|-------------|
 | `initDatabase()` | Opens DB, enables WAL + foreign keys, runs migrations |
 | `saveProgram(name, duration, daysPerWeek, weeks, existingProgramId?)` | Saves full program tree in a transaction. Returns `programId` |
-| `loadProgramList()` | Returns `ProgramSummary[]` for dashboard |
+| `loadProgramList()` | Returns `ProgramSummary[]` for dashboard. Derives week/day counts from actual child rows via JOINs |
 | `loadProgram(programId)` | Reconstructs full nested `Week[]` from DB |
 | `deleteProgram(programId)` | Deletes program + all children (CASCADE) |
+| `markDayCompleted(dayId)` | Sets `completed = 1` and `completed_at = now` on a day |
 | `programNameExists(name, excludeId?)` | Checks for duplicate program names |
 
 ### Design Decisions
@@ -69,4 +70,6 @@ sets
 
 All foreign keys use `ON DELETE CASCADE`. `position` columns ensure ordering.
 
-Fields `weight`, `reps_done`, `rir_done` on sets and `completed`, `completed_at` on days exist in the schema but are not used by the builder — they are reserved for the future workout logging page.
+`completed` and `completed_at` on days are used by the Program View screen to track workout progress. Fields `weight`, `reps_done`, `rir_done` on sets are reserved for the future detailed workout logging page.
+
+Note: `programs.duration` and `programs.days_per_week` are metadata columns written on save, but `loadProgramList()` derives these values from actual child rows to avoid sync issues.

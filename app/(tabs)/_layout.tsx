@@ -14,7 +14,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: Colors.tabIconSelected,
         tabBarInactiveTintColor: Colors.tabIconDefault,
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="grid" size={24} color={color} /> }} />
+      <Tabs.Screen name="(dashboard)" options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="grid" size={24} color={color} /> }} />
       <Tabs.Screen name="builder" options={{ title: 'Builder', tabBarIcon: ({ color }) => <Ionicons name="construct" size={24} color={color} /> }} />
     </Tabs>
   );

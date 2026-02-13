@@ -50,7 +50,7 @@ export default function DashboardScreen() {
 
     const handleOpen = (program: ProgramSummary) => {
         router.push({
-            pathname: '/builder/weeks',
+            pathname: '/program',
             params: { programId: program.id },
         });
     };

@@ -33,7 +33,10 @@ app/
 ├── _layout.tsx                  # Root layout (theme + DB init)
 ├── (tabs)/
 │   ├── _layout.tsx              # Tab bar (Dashboard, Builder)
-│   ├── index.tsx                # Dashboard: program list from DB
+│   ├── (dashboard)/
+│   │   ├── _layout.tsx          # Stack navigator for dashboard flow
+│   │   ├── index.tsx            # Dashboard: program list from DB
+│   │   └── program.tsx          # Program view: timeline, progress, day selection
 │   └── builder/
 │       ├── _layout.tsx          # Stack navigator
 │       ├── index.tsx            # Step 1: program metadata
@@ -57,7 +60,8 @@ docs/
 ### Key Flows
 
 - **Builder**: `builder/index.tsx` collects name/weeks/days → pushes to `weeks.tsx` → user builds program → Save writes full tree to SQLite in one transaction → redirects to Dashboard
-- **Dashboard**: loads program list on focus → tap to edit (passes `programId`) → delete with confirmation
+- **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → tap opens Program View → delete with confirmation
+- **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session.
 - **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
 
 ### Path Aliasing
@@ -84,11 +88,11 @@ SQLite via `expo-sqlite`. Service layer in `services/database.ts`. See `docs/dat
 
 **5 tables**: `programs` → `weeks` → `days` → `exercises` → `sets` (all CASCADE delete)
 
-Program names must be unique. Logging fields (`weight`, `reps_done`, `rir_done`, `completed`, `completed_at`) exist in schema but are unused by the builder — reserved for future workout logging page.
+Program names must be unique. `completed` and `completed_at` on days are used by the Program View to track workout progress. Logging fields on sets (`weight`, `reps_done`, `rir_done`) are reserved for future workout logging. Dashboard derives week/day counts from actual child rows (not `programs.duration`/`programs.days_per_week` metadata).
 
 ## Current Limitations
 
-1. **No workout logging**: Builder creates templates only. No page yet for entering actual workout data (weight, reps, RIR)
+1. **No workout logging**: Builder creates templates; Program View tracks day completion but no detailed set/rep/weight logging yet
 2. **No validation**: Users can save incomplete exercise data
 3. **No web support for DB**: `expo-sqlite` doesn't work on web
 
