@@ -45,6 +45,7 @@ app/
 services/
 └── database.ts                  # SQLite service layer (all DB logic)
 components/
+├── OverlayModal.tsx             # Reusable animated modal overlay (replaces RN Modal)
 └── builder/
     ├── types.ts                 # Set, Exercise, Day, Week, ProgramSummary
     ├── DaySection.tsx           # Day accordion component
@@ -81,6 +82,7 @@ Single dark theme. All colors in `constants/theme.ts` — never hardcode colors.
 - `Colors.accent` for primary actions, `Colors.primary` for secondary
 - Inputs: `surfaceElevated` bg, no border, `borderRadius: 12`, `placeholderTextColor={Colors.textTertiary}`
 - Functional components with hooks, types at top of file
+- **Modals**: Use `OverlayModal` component (not RN `Modal`) to avoid Android navigation bar flash with `edgeToEdgeEnabled`. Supports fade animation, frozen content during close, single/multi-button layouts.
 
 ## Database
 

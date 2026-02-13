@@ -3,7 +3,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    Alert,
     FlatList,
     Pressable,
     StyleSheet,
@@ -12,12 +11,14 @@ import {
 } from 'react-native';
 
 import type { ProgramSummary } from '@/components/builder';
+import { OverlayModal } from '@/components/OverlayModal';
 import { Colors } from '@/constants/theme';
 import { deleteProgram, loadProgramList } from '@/services/database';
 
 export default function DashboardScreen() {
     const router = useRouter();
     const [programs, setPrograms] = useState<ProgramSummary[]>([]);
+    const [deleteTarget, setDeleteTarget] = useState<ProgramSummary | null>(null);
 
     useFocusEffect(
         useCallback(() => {
@@ -25,27 +26,16 @@ export default function DashboardScreen() {
         }, [])
     );
 
-    const handleDelete = (program: ProgramSummary) => {
-        Alert.alert(
-            'Delete Program',
-            `Are you sure you want to delete "${program.name}"? This cannot be undone.`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await deleteProgram(program.id);
-                            setPrograms((prev) => prev.filter((p) => p.id !== program.id));
-                        } catch (err) {
-                            console.error(err);
-                            Alert.alert('Error', 'Failed to delete program.');
-                        }
-                    },
-                },
-            ]
-        );
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        const targetId = deleteTarget.id;
+        setDeleteTarget(null);
+        try {
+            await deleteProgram(targetId);
+            setPrograms((prev) => prev.filter((p) => p.id !== targetId));
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const handleOpen = (program: ProgramSummary) => {
@@ -76,7 +66,7 @@ export default function DashboardScreen() {
             <Pressable
                 style={styles.deleteButton}
                 hitSlop={8}
-                onPress={() => handleDelete(item)}
+                onPress={() => setDeleteTarget(item)}
             >
                 <Ionicons name="trash-outline" size={20} color={Colors.textTertiary} />
             </Pressable>
@@ -109,6 +99,17 @@ export default function DashboardScreen() {
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            <OverlayModal
+                visible={!!deleteTarget}
+                title="Delete Program"
+                message={`Are you sure you want to delete "${deleteTarget?.name}"? This cannot be undone.`}
+                onClose={() => setDeleteTarget(null)}
+                buttons={[
+                    { label: 'Cancel', onPress: () => setDeleteTarget(null), variant: 'cancel' },
+                    { label: 'Delete', onPress: confirmDelete, variant: 'confirm' },
+                ]}
+            />
         </View>
     );
 }

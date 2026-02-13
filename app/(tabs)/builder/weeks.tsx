@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Modal,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 
 import { DaySection, Exercise, Set, Week } from '@/components/builder';
+import { OverlayModal } from '@/components/OverlayModal';
 import { Colors } from '@/constants/theme';
 import { saveProgram as saveProgramToDb, loadProgram } from '@/services/database';
 
@@ -444,95 +444,46 @@ export default function Weeks() {
                 ))}
             </ScrollView>
 
-            {/* Sync Confirmation Modal */}
-            <Modal
+            <OverlayModal
                 visible={showSyncModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowSyncModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Sync Weeks</Text>
-                        <Text style={styles.modalMessage}>
-                            Copy Week {activeWeek} content to all other weeks? This will overwrite existing data.
-                        </Text>
-                        <View style={styles.modalButtons}>
-                            <Pressable
-                                style={styles.modalCancelButton}
-                                onPress={() => setShowSyncModal(false)}
-                            >
-                                <Text style={styles.modalCancelButtonText}>Cancel</Text>
-                            </Pressable>
-                            <Pressable
-                                style={styles.modalConfirmButton}
-                                onPress={confirmSync}
-                            >
-                                <Text style={styles.modalConfirmButtonText}>Sync</Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                title="Sync Weeks"
+                message={`Copy Week ${activeWeek} content to all other weeks? This will overwrite existing data.`}
+                onClose={() => setShowSyncModal(false)}
+                buttons={[
+                    { label: 'Cancel', onPress: () => setShowSyncModal(false), variant: 'cancel' },
+                    { label: 'Sync', onPress: confirmSync, variant: 'confirm' },
+                ]}
+            />
 
-            {/* Save Confirmation Modal */}
-            <Modal
+            <OverlayModal
                 visible={showSaveConfirm}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowSaveConfirm(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Save Program</Text>
-                        <Text style={styles.modalMessage}>
-                            Are you sure you want to save "{programName}"?
-                        </Text>
-                        <View style={styles.modalButtons}>
-                            <Pressable
-                                style={styles.modalCancelButton}
-                                onPress={() => setShowSaveConfirm(false)}
-                            >
-                                <Text style={styles.modalCancelButtonText}>Cancel</Text>
-                            </Pressable>
-                            <Pressable
-                                style={styles.modalConfirmButton}
-                                onPress={confirmSave}
-                            >
-                                <Text style={styles.modalConfirmButtonText}>Save</Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                title="Save Program"
+                message={`Are you sure you want to save "${programName}"?`}
+                onClose={() => setShowSaveConfirm(false)}
+                buttons={[
+                    { label: 'Cancel', onPress: () => setShowSaveConfirm(false), variant: 'cancel' },
+                    { label: 'Save', onPress: confirmSave, variant: 'confirm' },
+                ]}
+            />
 
-            {/* Save Feedback Modal */}
-            <Modal
+            <OverlayModal
                 visible={!!saveModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setSaveModal(null)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{saveModal?.title}</Text>
-                        <Text style={styles.modalMessage}>{saveModal?.message}</Text>
-                        <Pressable
-                            style={styles.modalSingleButton}
-                            onPress={() => {
-                                const wasSuccess = saveModal?.title === 'Saved';
-                                setSaveModal(null);
-                                if (wasSuccess) {
-                                    router.back();
-                                    router.navigate('/');
-                                }
-                            }}
-                        >
-                            <Text style={styles.modalConfirmButtonText}>OK</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            </Modal>
+                title={saveModal?.title ?? ''}
+                message={saveModal?.message ?? ''}
+                onClose={() => setSaveModal(null)}
+                buttons={[{
+                    label: 'OK',
+                    onPress: () => {
+                        const wasSuccess = saveModal?.title === 'Saved';
+                        setSaveModal(null);
+                        if (wasSuccess) {
+                            router.back();
+                            router.navigate('/');
+                        }
+                    },
+                    variant: 'confirm',
+                }]}
+            />
         </View>
     );
 }
@@ -644,69 +595,4 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
 
-    // Modal
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    modalContent: {
-        backgroundColor: Colors.surface,
-        borderRadius: 16,
-        padding: 24,
-        width: '100%',
-        maxWidth: 320,
-        borderWidth: 1,
-        borderColor: Colors.border,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: Colors.textPrimary,
-        marginBottom: 12,
-    },
-    modalMessage: {
-        fontSize: 14,
-        color: Colors.textSecondary,
-        lineHeight: 20,
-        marginBottom: 24,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    modalCancelButton: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        alignItems: 'center',
-    },
-    modalCancelButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: Colors.textSecondary,
-    },
-    modalConfirmButton: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 8,
-        backgroundColor: Colors.accent,
-        alignItems: 'center',
-    },
-    modalConfirmButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: Colors.textPrimary,
-    },
-    modalSingleButton: {
-        width: '100%',
-        paddingVertical: 12,
-        borderRadius: 8,
-        backgroundColor: Colors.accent,
-        alignItems: 'center',
-    },
 });
