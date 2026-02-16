@@ -5,6 +5,7 @@ export default function DashboardLayout() {
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="program" />
+            <Stack.Screen name="day" />
         </Stack>
     );
 }

@@ -8,16 +8,17 @@ Defined in `components/builder/types.ts`. Exported via `components/builder/index
 type Set = {
     id: string;
     rir?: number;           // planned Reps in Reserve
-    technique?: string;     // notes
-    weight?: number;        // actual weight (future: logging)
-    repsDone?: number;      // actual reps (future: logging)
-    rirDone?: number;       // actual RIR (future: logging)
+    technique?: string;     // technique/notes for the set
+    weight?: number;        // logged weight (decimal)
+    repsDone?: number;      // logged reps
+    rirAchieved?: boolean;  // whether target RIR was achieved
 };
 
 type Exercise = {
     id: string;
     name: string;
     repRange: string;       // e.g. "8-12"
+    notes?: string;         // per-exercise annotations
     sets: Set[];
 };
 
@@ -27,8 +28,8 @@ type Day = {
     customName: string;     // user-defined name
     isOpen: boolean;        // UI-only accordion state (NOT persisted)
     exercises: Exercise[];
-    completed?: boolean;    // future: workout logging
-    completedAt?: string;   // future: ISO date
+    completed?: boolean;    // day marked done after workout save
+    completedAt?: string;   // ISO date of completion
 };
 
 type Week = {

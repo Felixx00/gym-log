@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -13,7 +13,7 @@ import {
 
 import type { Day, Week } from '@/components/builder';
 import { Colors } from '@/constants/theme';
-import { loadProgram, markDayCompleted } from '@/services/database';
+import { loadProgram } from '@/services/database';
 
 type DayStatus = 'completed' | 'current' | 'future';
 
@@ -64,20 +64,22 @@ export default function ProgramScreen() {
         return total > 0 ? Math.round((completed / total) * 100) : 0;
     }, [weekData]);
 
-    useEffect(() => {
-        if (!programId) return;
-        loadProgram(Number(programId))
-            .then((data) => {
-                setProgramName(data.name);
-                setWeekData(data.weeks);
-            })
-            .catch((err) => {
-                console.error(err);
-                Alert.alert('Error', 'Failed to load program.');
-                router.back();
-            })
-            .finally(() => setIsLoading(false));
-    }, [programId]);
+    useFocusEffect(
+        useCallback(() => {
+            if (!programId) return;
+            loadProgram(Number(programId))
+                .then((data) => {
+                    setProgramName(data.name);
+                    setWeekData(data.weeks);
+                })
+                .catch((err) => {
+                    console.error(err);
+                    Alert.alert('Error', 'Failed to load program.');
+                    router.back();
+                })
+                .finally(() => setIsLoading(false));
+        }, [programId])
+    );
 
     // Auto-select the week containing the first incomplete day
     useEffect(() => {
@@ -208,22 +210,15 @@ export default function ProgramScreen() {
                                     </View>
                                     <Pressable
                                         style={styles.startButton}
-                                        onPress={async () => {
-                                            try {
-                                                await markDayCompleted(Number(day.id));
-                                                setWeekData((prev) => prev.map((w) => ({
-                                                    ...w,
-                                                    days: w.days.map((d) =>
-                                                        d.id === day.id
-                                                            ? { ...d, completed: true, completedAt: new Date().toISOString() }
-                                                            : d
-                                                    ),
-                                                })));
-                                                setSelectedDayId(null);
-                                            } catch (err) {
-                                                console.error(err);
-                                                Alert.alert('Error', 'Failed to mark day as completed.');
-                                            }
+                                        onPress={() => {
+                                            router.push({
+                                                pathname: '/day',
+                                                params: {
+                                                    dayId: day.id,
+                                                    dayNumber: String(dayNumber),
+                                                    dayName: displayName,
+                                                },
+                                            });
                                         }}
                                     >
                                         <Text style={styles.startButtonText}>Start Workout</Text>

@@ -15,6 +15,8 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 | `loadProgramList()` | Returns `ProgramSummary[]` for dashboard. Derives week/day counts from actual child rows via JOINs |
 | `loadProgram(programId)` | Reconstructs full nested `Week[]` from DB |
 | `deleteProgram(programId)` | Deletes program + all children (CASCADE) |
+| `loadDay(dayId)` | Loads a single day with exercises and sets |
+| `saveDayLog(dayId, exercises)` | Saves logged set data (weight, reps, RIR achieved) + marks day completed |
 | `markDayCompleted(dayId)` | Sets `completed = 1` and `completed_at = now` on a day |
 | `programNameExists(name, excludeId?)` | Checks for duplicate program names |
 
@@ -22,10 +24,10 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 
 - **Delete + re-insert children on save** rather than diffing. Simpler and correct for nested trees with reorder/add/remove.
 - **4 separate SELECTs on load** (weeks, days, exercises, sets) to avoid Cartesian joins. Assembles tree bottom-up with Maps.
-- **Migrations** via `PRAGMA user_version`. Current version: 1.
+- **Migrations** via `PRAGMA user_version`. Current version: 2. PRAGMA is set outside transactions (it's not transactional in SQLite).
 - **IDs**: DB uses `INTEGER PRIMARY KEY AUTOINCREMENT`. In-memory types use `string` IDs. Service layer converts with `String(id)`.
 
-## Schema (v1)
+## Schema (v2)
 
 ```sql
 programs
@@ -56,6 +58,7 @@ exercises
   position      INTEGER NOT NULL
   name          TEXT DEFAULT ''
   rep_range     TEXT DEFAULT ''
+  notes         TEXT DEFAULT ''            -- v2: per-exercise annotations
 
 sets
   id            INTEGER PRIMARY KEY AUTOINCREMENT
@@ -63,13 +66,18 @@ sets
   position      INTEGER NOT NULL
   rir           INTEGER                   -- planned RIR
   technique     TEXT DEFAULT ''
-  weight        REAL                      -- actual weight (logging, future)
-  reps_done     INTEGER                   -- actual reps (logging, future)
-  rir_done      INTEGER                   -- actual RIR (logging, future)
+  weight        REAL                      -- logged weight
+  reps_done     INTEGER                   -- logged reps
+  rir_done      INTEGER                   -- 0/1 boolean: RIR target achieved
 ```
 
 All foreign keys use `ON DELETE CASCADE`. `position` columns ensure ordering.
 
-`completed` and `completed_at` on days are used by the Program View screen to track workout progress. Fields `weight`, `reps_done`, `rir_done` on sets are reserved for the future detailed workout logging page.
+`completed` and `completed_at` on days track workout progress. `weight`, `reps_done`, `rir_done` on sets are written by the Day Workout page on save. `rir_done` is a boolean (0/1) indicating whether the target RIR was achieved (not a numeric RIR value).
+
+### Migrations
+
+- **v1**: Initial schema (all 5 tables)
+- **v2**: Added `exercises.notes` column
 
 Note: `programs.duration` and `programs.days_per_week` are metadata columns written on save, but `loadProgramList()` derives these values from actual child rows to avoid sync issues.

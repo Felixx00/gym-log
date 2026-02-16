@@ -4,13 +4,14 @@ export type Set = {
     technique?: string;
     weight?: number;
     repsDone?: number;
-    rirDone?: number;
+    rirAchieved?: boolean;
 };
 
 export type Exercise = {
     id: string;
     name: string;
     repRange: string;
+    notes?: string;
     sets: Set[];
 };
 

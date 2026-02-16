@@ -59,7 +59,7 @@ export default function DashboardScreen() {
                     </View>
                     <View style={styles.metaItem}>
                         <Ionicons name="barbell-outline" size={14} color={Colors.textSecondary} />
-                        <Text style={styles.metaText}>{item.daysPerWeek} Days / Wk</Text>
+                        <Text style={styles.metaText}>{item.daysPerWeek} Days/Week</Text>
                     </View>
                 </View>
             </View>

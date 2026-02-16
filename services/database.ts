@@ -5,7 +5,7 @@ import type { Day, Exercise, ProgramSummary, Set, Week } from '@/components/buil
 let db: SQLite.SQLiteDatabase | null = null;
 
 const DB_NAME = 'gymlog.db';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 // ────────────────────────── Init & Migrations ──────────────────────────
 
@@ -27,12 +27,16 @@ export async function initDatabase(): Promise<void> {
 async function migrate(fromVersion: number): Promise<void> {
     if (!db) throw new Error('Database not initialized');
 
-    await db.withTransactionAsync(async () => {
-        if (fromVersion < 1) {
+    if (fromVersion < 1) {
+        await db.withTransactionAsync(async () => {
             await applyV1();
-        }
-        await db!.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
-    });
+        });
+        await db.execAsync('PRAGMA user_version = 1;');
+    }
+    if (fromVersion < 2) {
+        await applyV2();
+        await db.execAsync('PRAGMA user_version = 2;');
+    }
 }
 
 async function applyV1(): Promise<void> {
@@ -89,6 +93,13 @@ async function applyV1(): Promise<void> {
     `);
 }
 
+async function applyV2(): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+    await db.execAsync(
+        `ALTER TABLE exercises ADD COLUMN notes TEXT NOT NULL DEFAULT '';`
+    );
+}
+
 // ────────────────────────── Save ──────────────────────────
 
 export async function saveProgram(
@@ -141,8 +152,8 @@ export async function saveProgram(
                 for (let e = 0; e < day.exercises.length; e++) {
                     const exercise = day.exercises[e];
                     const exResult = await db!.runAsync(
-                        'INSERT INTO exercises (day_id, position, name, rep_range) VALUES (?, ?, ?, ?)',
-                        [dayId, e, exercise.name, exercise.repRange]
+                        'INSERT INTO exercises (day_id, position, name, rep_range, notes) VALUES (?, ?, ?, ?, ?)',
+                        [dayId, e, exercise.name, exercise.repRange, exercise.notes ?? '']
                     );
                     const exerciseId = exResult.lastInsertRowId;
 
@@ -150,7 +161,7 @@ export async function saveProgram(
                         const set = exercise.sets[s];
                         await db!.runAsync(
                             'INSERT INTO sets (exercise_id, position, rir, technique, weight, reps_done, rir_done) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            [exerciseId, s, set.rir ?? null, set.technique ?? '', set.weight ?? null, set.repsDone ?? null, set.rirDone ?? null]
+                            [exerciseId, s, set.rir ?? null, set.technique ?? '', set.weight ?? null, set.repsDone ?? null, set.rirAchieved ? 1 : null]
                         );
                     }
                 }
@@ -241,7 +252,7 @@ export async function loadProgram(programId: number): Promise<{
     const exerciseRows = dayIds.length > 0
         ? await db.getAllAsync<{
             id: number; day_id: number; position: number;
-            name: string; rep_range: string;
+            name: string; rep_range: string; notes: string;
         }>(
             `SELECT * FROM exercises WHERE day_id IN (${dayIds.map(() => '?').join(',')}) ORDER BY position`,
             dayIds
@@ -272,7 +283,7 @@ export async function loadProgram(programId: number): Promise<{
             technique: row.technique ?? '',
             weight: row.weight ?? undefined,
             repsDone: row.reps_done ?? undefined,
-            rirDone: row.rir_done ?? undefined,
+            rirAchieved: row.rir_done != null ? row.rir_done === 1 : undefined,
         });
         setsByExercise.set(row.exercise_id, sets);
     }
@@ -284,6 +295,7 @@ export async function loadProgram(programId: number): Promise<{
             id: String(row.id),
             name: row.name,
             repRange: row.rep_range,
+            notes: row.notes || undefined,
             sets: setsByExercise.get(row.id) ?? [],
         });
         exercisesByDay.set(row.day_id, exercises);
@@ -316,6 +328,101 @@ export async function loadProgram(programId: number): Promise<{
         daysPerWeek: program.days_per_week,
         weeks,
     };
+}
+
+// ────────────────────────── Load Single Day ──────────────────────────
+
+export async function loadDay(dayId: number): Promise<Day> {
+    if (!db) throw new Error('Database not initialized');
+
+    const dayRow = await db.getFirstAsync<{
+        id: number; week_id: number; position: number;
+        default_name: string; custom_name: string;
+        completed: number; completed_at: string | null;
+    }>('SELECT * FROM days WHERE id = ?', [dayId]);
+
+    if (!dayRow) throw new Error(`Day ${dayId} not found`);
+
+    const exerciseRows = await db.getAllAsync<{
+        id: number; day_id: number; position: number;
+        name: string; rep_range: string; notes: string;
+    }>('SELECT * FROM exercises WHERE day_id = ? ORDER BY position', [dayId]);
+
+    const exerciseIds = exerciseRows.map((e) => e.id);
+
+    const setRows = exerciseIds.length > 0
+        ? await db.getAllAsync<{
+            id: number; exercise_id: number; position: number;
+            rir: number | null; technique: string | null;
+            weight: number | null; reps_done: number | null; rir_done: number | null;
+        }>(
+            `SELECT * FROM sets WHERE exercise_id IN (${exerciseIds.map(() => '?').join(',')}) ORDER BY position`,
+            exerciseIds
+        )
+        : [];
+
+    const setsByExercise = new Map<number, Set[]>();
+    for (const row of setRows) {
+        const sets = setsByExercise.get(row.exercise_id) ?? [];
+        sets.push({
+            id: String(row.id),
+            rir: row.rir ?? undefined,
+            technique: row.technique ?? '',
+            weight: row.weight ?? undefined,
+            repsDone: row.reps_done ?? undefined,
+            rirAchieved: row.rir_done != null ? row.rir_done === 1 : undefined,
+        });
+        setsByExercise.set(row.exercise_id, sets);
+    }
+
+    const exercises: Exercise[] = exerciseRows.map((row) => ({
+        id: String(row.id),
+        name: row.name,
+        repRange: row.rep_range,
+        notes: row.notes || undefined,
+        sets: setsByExercise.get(row.id) ?? [],
+    }));
+
+    return {
+        id: String(dayRow.id),
+        defaultName: dayRow.default_name,
+        customName: dayRow.custom_name,
+        isOpen: false,
+        exercises,
+        completed: dayRow.completed === 1,
+        completedAt: dayRow.completed_at ?? undefined,
+    };
+}
+
+// ────────────────────────── Save Day Log ──────────────────────────
+
+export async function saveDayLog(dayId: number, exercises: Exercise[]): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+
+    await db.withTransactionAsync(async () => {
+        for (const exercise of exercises) {
+            await db!.runAsync(
+                'UPDATE exercises SET notes = ? WHERE id = ?',
+                [exercise.notes ?? '', Number(exercise.id)]
+            );
+            for (const set of exercise.sets) {
+                await db!.runAsync(
+                    'UPDATE sets SET weight = ?, reps_done = ?, rir_done = ? WHERE id = ?',
+                    [
+                        set.weight ?? null,
+                        set.repsDone ?? null,
+                        set.rirAchieved ? 1 : 0,
+                        Number(set.id),
+                    ]
+                );
+            }
+        }
+
+        await db!.runAsync(
+            "UPDATE days SET completed = 1, completed_at = datetime('now') WHERE id = ?",
+            [dayId]
+        );
+    });
 }
 
 // ────────────────────────── Delete ──────────────────────────
