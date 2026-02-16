@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Animated,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -31,6 +32,18 @@ export default function DayScreen() {
     const [isSaving, setIsSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [historyExercise, setHistoryExercise] = useState<{ id: string; name: string } | null>(null);
+    const [toastMsg, setToastMsg] = useState('');
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const showToast = useCallback((msg: string) => {
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMsg(msg);
+        Animated.timing(toastAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+        }, 2000);
+    }, []);
 
     useEffect(() => {
         if (!dayId) return;
@@ -144,13 +157,48 @@ export default function DayScreen() {
                                     Goal: <Text style={styles.goalHighlight}>{exercise.repRange} Reps</Text>
                                 </Text>
                             </View>
-                            <Pressable
-                                style={styles.historyButton}
-                                onPress={() => setHistoryExercise({ id: exercise.id, name: exercise.name })}
-                                hitSlop={6}
-                            >
-                                <Ionicons name="time-outline" size={20} color={Colors.textSecondary} />
-                            </Pressable>
+                            <View style={styles.exerciseActions}>
+                                <Pressable
+                                    style={styles.actionButton}
+                                    onPress={() => {
+                                        const firstSet = exercise.sets[0];
+                                        const val = weightText[firstSet?.id];
+                                        if (!val) {
+                                            showToast('Fill in the Set 1 weight to copy it across');
+                                            return;
+                                        }
+                                        const num = parseFloat(val);
+                                        if (isNaN(num)) return;
+                                        const txtUpdates: Record<string, string> = {};
+                                        for (let i = 1; i < exercise.sets.length; i++) {
+                                            txtUpdates[exercise.sets[i].id] = val;
+                                        }
+                                        setWeightText((prev) => ({ ...prev, ...txtUpdates }));
+                                        setExercises((prev) =>
+                                            prev.map((ex) =>
+                                                ex.id === exercise.id
+                                                    ? {
+                                                          ...ex,
+                                                          sets: ex.sets.map((s, si) =>
+                                                              si > 0 ? { ...s, weight: num } : s
+                                                          ),
+                                                      }
+                                                    : ex
+                                            )
+                                        );
+                                    }}
+                                    hitSlop={6}
+                                >
+                                    <Ionicons name="copy-outline" size={18} color={Colors.textSecondary} />
+                                </Pressable>
+                                <Pressable
+                                    style={styles.actionButton}
+                                    onPress={() => setHistoryExercise({ id: exercise.id, name: exercise.name })}
+                                    hitSlop={6}
+                                >
+                                    <Ionicons name="time-outline" size={20} color={Colors.textSecondary} />
+                                </Pressable>
+                            </View>
                         </View>
 
                         {/* Column Labels */}
@@ -257,6 +305,12 @@ export default function DayScreen() {
                 exerciseName={historyExercise?.name ?? ''}
                 onClose={() => setHistoryExercise(null)}
             />
+
+            {toastMsg !== '' && (
+                <Animated.View style={[styles.toast, { opacity: toastAnim }]} pointerEvents="none">
+                    <Text style={styles.toastText}>{toastMsg}</Text>
+                </Animated.View>
+            )}
         </View>
     );
 }
@@ -366,7 +420,11 @@ const styles = StyleSheet.create({
         color: Colors.accent,
         fontWeight: '700',
     },
-    historyButton: {
+    exerciseActions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    actionButton: {
         width: 36,
         height: 36,
         borderRadius: 10,
@@ -494,5 +552,22 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         paddingVertical: 8,
         paddingBottom: 4,
+    },
+
+    // Toast
+    toast: {
+        position: 'absolute',
+        bottom: 40,
+        alignSelf: 'center',
+        backgroundColor: Colors.surfaceElevated,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    toastText: {
+        fontSize: 13,
+        color: Colors.textSecondary,
     },
 });

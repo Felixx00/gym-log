@@ -66,7 +66,7 @@ docs/
 - **Builder**: `builder/index.tsx` collects name/weeks/days → pushes to `weeks.tsx` → user builds program → Save writes full tree to SQLite in one transaction → redirects to Dashboard
 - **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → tap opens Program View → delete with confirmation
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session.
-- **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). History button opens a draggable bottom sheet (`ExerciseHistorySheet`) showing per-week logged data for the same exercise (matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation.
+- **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation.
 - **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
 
 ### Path Aliasing
@@ -100,6 +100,24 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 
 1. **No validation**: Users can save incomplete exercise data
 2. **No web support for DB**: `expo-sqlite` doesn't work on web
+
+## Future Ideas
+
+### Critical
+- **Edit existing programs** — Modify programs after creation (swap exercises, adjust reps mid-cycle). Currently must delete and recreate.
+- **Undo day completion** — Allow uncompleting a saved workout to redo it.
+- **Exercise library / autocomplete** — Avoid manual typing and typos that break history matching (exact name match).
+
+### High Value
+- **Duplicate program** — Copy a program to repeat a cycle with tweaks.
+- **Workout summary after save** — Show total sets, volume, PRs after completing a day instead of silently navigating back.
+- **Progress / Stats screen** — Surface trends: total volume over time, personal records, completion rate. Data already exists in DB.
+
+### Quality of Life
+- **Rest timer** — Configurable countdown between sets.
+- **Data export / backup** — JSON or CSV export to prevent data loss (no cloud, single device).
+- **Reorder exercises during workout** — Swap order based on equipment availability.
+- **Program templates** — Pre-built starting programs (PPL, Upper/Lower, Full Body).
 
 ## Project Configuration
 
