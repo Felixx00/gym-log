@@ -14,11 +14,13 @@ import type { ProgramSummary } from '@/components/builder';
 import { OverlayModal } from '@/components/OverlayModal';
 import { Colors } from '@/constants/theme';
 import { deleteProgram, loadProgramList } from '@/services/database';
+import { generateTestProgram } from '@/services/devGenerator';
 
 export default function DashboardScreen() {
     const router = useRouter();
     const [programs, setPrograms] = useState<ProgramSummary[]>([]);
     const [deleteTarget, setDeleteTarget] = useState<ProgramSummary | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -35,6 +37,18 @@ export default function DashboardScreen() {
             setPrograms((prev) => prev.filter((p) => p.id !== targetId));
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleGenerate = async () => {
+        setIsGenerating(true);
+        try {
+            await generateTestProgram();
+            loadProgramList().then(setPrograms).catch(console.error);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -76,10 +90,26 @@ export default function DashboardScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>
-                    Your <Text style={styles.titleAccent}>Programs</Text>
-                </Text>
-                <Text style={styles.subtitle}>Select a routine to begin</Text>
+                <View style={styles.headerRow}>
+                    <View>
+                        <Text style={styles.title}>
+                            Your <Text style={styles.titleAccent}>Programs</Text>
+                        </Text>
+                        <Text style={styles.subtitle}>Select a routine to begin</Text>
+                    </View>
+                    <Pressable
+                        style={styles.generateButton}
+                        onPress={handleGenerate}
+                        disabled={isGenerating}
+                        hitSlop={6}
+                    >
+                        <Ionicons
+                            name="flask-outline"
+                            size={20}
+                            color={isGenerating ? Colors.textTertiary : Colors.textSecondary}
+                        />
+                    </Pressable>
+                </View>
             </View>
 
             {programs.length === 0 ? (
@@ -123,6 +153,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 80,
         paddingBottom: 36,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    generateButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: Colors.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
     },
     title: {
         fontSize: 28,

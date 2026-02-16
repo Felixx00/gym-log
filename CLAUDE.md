@@ -44,9 +44,11 @@ app/
 │       └── weeks.tsx            # Step 2: build weeks/days/exercises
 ├── modal.tsx
 services/
-└── database.ts                  # SQLite service layer (all DB logic)
+├── database.ts                  # SQLite service layer (all DB logic)
+└── devGenerator.ts              # Test program generator (dev tool)
 components/
 ├── OverlayModal.tsx             # Reusable animated modal overlay (replaces RN Modal)
+├── ExerciseHistorySheet.tsx     # Draggable bottom sheet for exercise history
 └── builder/
     ├── types.ts                 # Set, Exercise, Day, Week, ProgramSummary
     ├── DaySection.tsx           # Day accordion component
@@ -64,7 +66,7 @@ docs/
 - **Builder**: `builder/index.tsx` collects name/weeks/days → pushes to `weeks.tsx` → user builds program → Save writes full tree to SQLite in one transaction → redirects to Dashboard
 - **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → tap opens Program View → delete with confirmation
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session.
-- **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation.
+- **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). History button opens a draggable bottom sheet (`ExerciseHistorySheet`) showing per-week logged data for the same exercise (matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation.
 - **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
 
 ### Path Aliasing
@@ -98,7 +100,6 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 
 1. **No validation**: Users can save incomplete exercise data
 2. **No web support for DB**: `expo-sqlite` doesn't work on web
-3. **History button**: Placeholder on day workout cards — not yet functional
 
 ## Project Configuration
 

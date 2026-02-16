@@ -442,6 +442,99 @@ export async function markDayCompleted(dayId: number): Promise<void> {
     );
 }
 
+// ────────────────────────── Exercise History ──────────────────────────
+
+export type HistoryWeek = {
+    weekName: string;
+    weekPosition: number;
+    completedAt: string;
+    notes?: string;
+    sets: {
+        position: number;
+        weight: number | null;
+        repsDone: number | null;
+        rir: number | null;
+        rirAchieved: boolean;
+    }[];
+};
+
+export async function loadExerciseHistory(exerciseId: number): Promise<HistoryWeek[]> {
+    if (!db) throw new Error('Database not initialized');
+
+    // Find the program, exercise name, and day name from this exercise
+    const origin = await db.getFirstAsync<{ name: string; program_id: number; day_name: string }>(
+        `SELECT e.name, w.program_id, d.default_name AS day_name
+         FROM exercises e
+         JOIN days d ON e.day_id = d.id
+         JOIN weeks w ON d.week_id = w.id
+         WHERE e.id = ?`,
+        [exerciseId]
+    );
+
+    if (!origin) return [];
+
+    // Find matching exercises on the same day name across completed weeks
+    const rows = await db.getAllAsync<{
+        week_name: string;
+        week_position: number;
+        completed_at: string;
+        exercise_id: number;
+        notes: string;
+        set_position: number;
+        weight: number | null;
+        reps_done: number | null;
+        rir: number | null;
+        rir_done: number | null;
+    }>(
+        `SELECT
+            w.name AS week_name,
+            w.position AS week_position,
+            d.completed_at,
+            e.id AS exercise_id,
+            e.notes,
+            s.position AS set_position,
+            s.weight,
+            s.reps_done,
+            s.rir,
+            s.rir_done
+         FROM exercises e
+         JOIN days d ON e.day_id = d.id
+         JOIN weeks w ON d.week_id = w.id
+         JOIN sets s ON s.exercise_id = e.id
+         WHERE w.program_id = ?
+           AND e.name = ?
+           AND d.default_name = ?
+           AND d.completed = 1
+         ORDER BY w.position DESC, s.position ASC`,
+        [origin.program_id, origin.name, origin.day_name]
+    );
+
+    // Group by week+exercise (in case same exercise on multiple days in a week)
+    const weekMap = new Map<string, HistoryWeek>();
+    for (const row of rows) {
+        const key = `${row.week_position}-${row.exercise_id}`;
+        if (!weekMap.has(key)) {
+            weekMap.set(key, {
+                weekName: row.week_name,
+                weekPosition: row.week_position,
+                completedAt: row.completed_at,
+                notes: row.notes || undefined,
+                sets: [],
+            });
+        }
+        weekMap.get(key)!.sets.push({
+            position: row.set_position,
+            weight: row.weight,
+            repsDone: row.reps_done,
+            rir: row.rir,
+            rirAchieved: row.rir_done === 1,
+        });
+    }
+
+    // Sort by week position descending (most recent first)
+    return Array.from(weekMap.values()).sort((a, b) => b.weekPosition - a.weekPosition);
+}
+
 // ────────────────────────── Validation ──────────────────────────
 
 export async function programNameExists(

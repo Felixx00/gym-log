@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import type { Exercise, Set } from '@/components/builder';
+import { ExerciseHistorySheet } from '@/components/ExerciseHistorySheet';
 import { OverlayModal } from '@/components/OverlayModal';
 import { Colors } from '@/constants/theme';
 import { loadDay, saveDayLog } from '@/services/database';
@@ -29,6 +30,7 @@ export default function DayScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [historyExercise, setHistoryExercise] = useState<{ id: string; name: string } | null>(null);
 
     useEffect(() => {
         if (!dayId) return;
@@ -142,9 +144,12 @@ export default function DayScreen() {
                                     Goal: <Text style={styles.goalHighlight}>{exercise.repRange} Reps</Text>
                                 </Text>
                             </View>
-                            <Pressable style={styles.historyButton}>
-                                <Ionicons name="time-outline" size={14} color={Colors.accent} />
-                                <Text style={styles.historyButtonText}>History</Text>
+                            <Pressable
+                                style={styles.historyButton}
+                                onPress={() => setHistoryExercise({ id: exercise.id, name: exercise.name })}
+                                hitSlop={6}
+                            >
+                                <Ionicons name="time-outline" size={20} color={Colors.textSecondary} />
                             </Pressable>
                         </View>
 
@@ -235,6 +240,13 @@ export default function DayScreen() {
                     { label: 'Cancel', onPress: () => setShowSaveConfirm(false), variant: 'cancel' },
                     { label: 'Save', onPress: confirmSave, variant: 'confirm' },
                 ]}
+            />
+
+            <ExerciseHistorySheet
+                visible={historyExercise != null}
+                exerciseId={historyExercise?.id ?? ''}
+                exerciseName={historyExercise?.name ?? ''}
+                onClose={() => setHistoryExercise(null)}
             />
         </View>
     );
@@ -346,19 +358,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     historyButton: {
-        flexDirection: 'row',
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: Colors.surfaceElevated,
         alignItems: 'center',
-        gap: 4,
-        borderWidth: 1,
-        borderColor: Colors.accent,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-    },
-    historyButtonText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: Colors.accent,
+        justifyContent: 'center',
     },
 
     // Column widths
