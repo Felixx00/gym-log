@@ -153,6 +153,15 @@ export default function DayScreen() {
                             </Pressable>
                         </View>
 
+                        {/* Column Labels */}
+                        <View style={styles.colLabelsRow}>
+                            <View style={styles.setNumCol} />
+                            <View style={styles.rirTechCol} />
+                            <Text style={[styles.colLabel, styles.inputCol]}>REPS</Text>
+                            <Text style={[styles.colLabel, styles.weightCol]}>Weight</Text>
+                            <View style={styles.checkCol} />
+                        </View>
+
                         {/* Set Rows */}
                         {exercise.sets.map((set, index) => (
                             <View key={set.id} style={styles.setRow}>
@@ -386,6 +395,21 @@ const styles = StyleSheet.create({
         width: 28,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+
+    // Column Labels
+    colLabelsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: -4,
+    },
+    colLabel: {
+        fontSize: 9,
+        fontWeight: '600',
+        color: Colors.textTertiary,
+        letterSpacing: 0.5,
+        textAlign: 'center',
     },
 
     // Set Row
