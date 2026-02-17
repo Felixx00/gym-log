@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
+    Animated,
     FlatList,
+    GestureResponderEvent,
     Pressable,
     StyleSheet,
     Text,
@@ -19,14 +21,45 @@ import { generateTestProgram } from '@/services/devGenerator';
 export default function DashboardScreen() {
     const router = useRouter();
     const [programs, setPrograms] = useState<ProgramSummary[]>([]);
+    const [menuTarget, setMenuTarget] = useState<ProgramSummary | null>(null);
+    const [menuPos, setMenuPos] = useState({ top: 0 });
     const [deleteTarget, setDeleteTarget] = useState<ProgramSummary | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
+    const menuAnim = useRef(new Animated.Value(0)).current;
+
     useFocusEffect(
         useCallback(() => {
+            menuAnim.setValue(0);
+            setMenuTarget(null);
             loadProgramList().then(setPrograms).catch(console.error);
         }, [])
     );
+
+    const openMenu = (item: ProgramSummary, event: GestureResponderEvent) => {
+        if (menuTarget?.id === item.id) {
+            closeMenu();
+            return;
+        }
+        const { pageY } = event.nativeEvent;
+        setMenuPos({ top: pageY });
+        setMenuTarget(item);
+        menuAnim.setValue(0);
+        Animated.spring(menuAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            damping: 18,
+            stiffness: 320,
+        }).start();
+    };
+
+    const closeMenu = () => {
+        Animated.timing(menuAnim, {
+            toValue: 0,
+            duration: 120,
+            useNativeDriver: true,
+        }).start(() => setMenuTarget(null));
+    };
 
     const confirmDelete = async () => {
         if (!deleteTarget) return;
@@ -59,6 +92,14 @@ export default function DashboardScreen() {
         });
     };
 
+    const handleEdit = (program: ProgramSummary) => {
+        setMenuTarget(null);
+        router.push({
+            pathname: '/edit',
+            params: { programId: program.id },
+        });
+    };
+
     const renderProgram = ({ item }: { item: ProgramSummary }) => (
         <Pressable style={styles.card} onPress={() => handleOpen(item)}>
             <View style={styles.accentBarWrapper}>
@@ -78,14 +119,27 @@ export default function DashboardScreen() {
                 </View>
             </View>
             <Pressable
-                style={styles.deleteButton}
+                style={styles.menuButton}
                 hitSlop={8}
-                onPress={() => setDeleteTarget(item)}
+                onPress={(e) => openMenu(item, e)}
             >
-                <Ionicons name="trash-outline" size={20} color={Colors.textTertiary} />
+                <Ionicons
+                    name="ellipsis-vertical"
+                    size={20}
+                    color={menuTarget?.id === item.id ? Colors.textPrimary : Colors.textTertiary}
+                />
             </Pressable>
         </Pressable>
     );
+
+    const dropdownScale = menuAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.9, 1],
+    });
+    const dropdownTranslateY = menuAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-8, 0],
+    });
 
     return (
         <View style={styles.container}>
@@ -127,7 +181,50 @@ export default function DashboardScreen() {
                     renderItem={renderProgram}
                     contentContainerStyle={styles.list}
                     showsVerticalScrollIndicator={false}
+                    onScrollBeginDrag={() => menuTarget && closeMenu()}
                 />
+            )}
+
+            {menuTarget && (
+                <>
+                    <Pressable
+                        style={styles.backdrop}
+                        onPress={closeMenu}
+                    />
+                    <Animated.View
+                        style={[
+                            styles.dropdown,
+                            {
+                                top: menuPos.top,
+                                opacity: menuAnim,
+                                transform: [
+                                    { scale: dropdownScale },
+                                    { translateY: dropdownTranslateY },
+                                ],
+                            },
+                        ]}
+                    >
+                        <Pressable
+                            style={styles.dropdownItem}
+                            onPress={() => handleEdit(menuTarget)}
+                        >
+                            <Ionicons name="create-outline" size={18} color={Colors.textPrimary} />
+                            <Text style={styles.dropdownText}>Edit</Text>
+                        </Pressable>
+                        <View style={styles.dropdownDivider} />
+                        <Pressable
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                                const t = menuTarget;
+                                setMenuTarget(null);
+                                setDeleteTarget(t);
+                            }}
+                        >
+                            <Ionicons name="trash-outline" size={18} color={Colors.accent} />
+                            <Text style={[styles.dropdownText, { color: Colors.accent }]}>Delete</Text>
+                        </Pressable>
+                    </Animated.View>
+                </>
             )}
 
             <OverlayModal
@@ -233,9 +330,45 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textSecondary,
     },
-    deleteButton: {
+    menuButton: {
         padding: 8,
         alignSelf: 'flex-start',
+    },
+    backdrop: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 50,
+    },
+    dropdown: {
+        position: 'absolute',
+        right: 20,
+        zIndex: 51,
+        backgroundColor: Colors.surfaceElevated,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        minWidth: 150,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+    },
+    dropdownText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: Colors.textPrimary,
+    },
+    dropdownDivider: {
+        height: 1,
+        backgroundColor: Colors.border,
+        marginHorizontal: 10,
     },
     emptyState: {
         flex: 1,

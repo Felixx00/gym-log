@@ -37,7 +37,8 @@ app/
 │   │   ├── _layout.tsx          # Stack navigator for dashboard flow
 │   │   ├── index.tsx            # Dashboard: program list from DB
 │   │   ├── program.tsx          # Program view: timeline, progress, day selection
-│   │   └── day.tsx              # Day workout: log sets (reps, weight, RIR)
+│   │   ├── day.tsx              # Day workout: log sets (reps, weight, RIR)
+│   │   └── edit.tsx             # Edit program (re-exports builder/weeks.tsx)
 │   └── builder/
 │       ├── _layout.tsx          # Stack navigator
 │       ├── index.tsx            # Step 1: program metadata
@@ -63,8 +64,8 @@ docs/
 
 ### Key Flows
 
-- **Builder**: `builder/index.tsx` collects name/weeks/days → pushes to `weeks.tsx` → user builds program → Save writes full tree to SQLite in one transaction → redirects to Dashboard
-- **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → tap opens Program View → delete with confirmation
+- **Builder**: `builder/index.tsx` collects name/weeks/days (validated: max 24 weeks, max 20 days/week, name required) → pushes to `weeks.tsx` → user builds program → Save validates all weeks (day names required + unique per week, exercises required per day, exercise name + rep range required) → writes full tree to SQLite in one transaction → redirects to Dashboard
+- **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → three-dots menu per card with Edit and Delete options. Edit navigates to `(dashboard)/edit.tsx` (reuses `builder/weeks.tsx` on the dashboard stack). Delete shows confirmation modal.
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session.
 - **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation.
 - **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
@@ -96,16 +97,21 @@ SQLite via `expo-sqlite`. Service layer in `services/database.ts`. See `docs/dat
 
 Program names must be unique. `completed` and `completed_at` on days track workout progress. Set logging fields: `weight` (decimal), `reps_done` (integer), `rir_done` (0/1 boolean — RIR achieved, not a number). `exercises.notes` stores per-exercise annotations. Dashboard derives week/day counts from actual child rows (not `programs.duration`/`programs.days_per_week` metadata).
 
+## Validation
+
+- **Builder step 1** (`builder/index.tsx`): Program name required, weeks clamped 1–24, days/week clamped 1–20. Inline error text shown below inputs.
+- **Builder step 2 / Edit** (`builder/weeks.tsx`): On save, validates all weeks — every day must have a non-empty name, day names must be unique within each week (case-insensitive), every day must have at least one exercise, every exercise must have a name and rep range. First error shown in `OverlayModal`.
+
 ## Current Limitations
 
-1. **No validation**: Users can save incomplete exercise data
-2. **No web support for DB**: `expo-sqlite` doesn't work on web
+1. **No web support for DB**: `expo-sqlite` doesn't work on web
+2. **Edit mode limitations**: Cannot change program name, number of weeks, or days per week when editing — only exercises, sets, day names, and set details.
 
 ## Future Ideas
 
 ### Critical
-- **Edit existing programs** — Modify programs after creation (swap exercises, adjust reps mid-cycle). Currently must delete and recreate.
 - **Undo day completion** — Allow uncompleting a saved workout to redo it.
+- **Edit program metadata** — Allow changing program name, weeks, and days/week during editing (currently only exercises/sets/day names are editable).
 - **Exercise library / autocomplete** — Avoid manual typing and typos that break history matching (exact name match).
 
 ### High Value

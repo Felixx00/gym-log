@@ -55,6 +55,7 @@ export default function Weeks() {
               }))
     );
 
+    const isEditMode = !!programId;
     const activeWeekObj = weekData[activeWeek - 1];
 
     // Load existing program from DB
@@ -415,7 +416,7 @@ export default function Weeks() {
                         disabled={isSaving}
                     >
                         <Text style={styles.saveButtonText}>
-                            {isSaving ? 'Saving...' : 'Save'}
+                            {isSaving ? 'Saving...' : isEditMode ? 'Edit' : 'Save'}
                         </Text>
                     </Pressable>
                 </View>
@@ -503,12 +504,15 @@ export default function Weeks() {
 
             <OverlayModal
                 visible={showSaveConfirm}
-                title="Save Program"
-                message={`Are you sure you want to save "${programName}"?`}
+                title={isEditMode ? 'Edit Program' : 'Save Program'}
+                message={isEditMode
+                    ? `Save changes to "${programName}"?`
+                    : `Are you sure you want to save "${programName}"?`
+                }
                 onClose={() => setShowSaveConfirm(false)}
                 buttons={[
                     { label: 'Cancel', onPress: () => setShowSaveConfirm(false), variant: 'cancel' },
-                    { label: 'Save', onPress: confirmSave, variant: 'confirm' },
+                    { label: isEditMode ? 'Confirm' : 'Save', onPress: confirmSave, variant: 'confirm' },
                 ]}
             />
 
@@ -553,7 +557,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         paddingHorizontal: 20,
-        paddingTop: 40,
+        paddingTop: 60,
         paddingBottom: 12,
     },
     backButton: {
