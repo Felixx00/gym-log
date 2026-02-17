@@ -7,7 +7,6 @@ import {
     Animated,
     InteractionManager,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -39,6 +38,9 @@ export default function DayScreen() {
     const [toastMsg, setToastMsg] = useState('');
     const toastAnim = useRef(new Animated.Value(0)).current;
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scrollY = useRef(new Animated.Value(0)).current;
+    const [contentHeight, setContentHeight] = useState(0);
+    const [containerHeight, setContainerHeight] = useState(0);
 
     const showToast = useCallback((msg: string) => {
         if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -148,11 +150,19 @@ export default function DayScreen() {
             <View style={styles.headerDivider} />
 
             {/* Exercise List */}
-            <ScrollView
+            <View style={styles.scrollWrapper}>
+            <Animated.ScrollView
                 style={styles.scroll}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: true }
+                )}
+                scrollEventThrottle={16}
+                onContentSizeChange={(_, h) => setContentHeight(h)}
+                onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
             >
                 {exercises.map((exercise) => (
                     <View key={exercise.id} style={styles.exerciseCard}>
@@ -293,7 +303,26 @@ export default function DayScreen() {
                         />
                     </View>
                 ))}
-            </ScrollView>
+            </Animated.ScrollView>
+            {contentHeight > containerHeight && (
+                <Animated.View
+                    pointerEvents="none"
+                    style={[
+                        styles.scrollThumb,
+                        {
+                            height: Math.max((containerHeight / contentHeight) * containerHeight, 30),
+                            transform: [{
+                                translateY: scrollY.interpolate({
+                                    inputRange: [0, Math.max(contentHeight - containerHeight, 1)],
+                                    outputRange: [0, containerHeight - Math.max((containerHeight / contentHeight) * containerHeight, 30)],
+                                    extrapolate: 'clamp',
+                                }),
+                            }],
+                        },
+                    ]}
+                />
+            )}
+            </View>
 
             <OverlayModal
                 visible={showSaveConfirm}
@@ -388,8 +417,19 @@ const styles = StyleSheet.create({
     },
 
     // Scroll
+    scrollWrapper: {
+        flex: 1,
+    },
     scroll: {
         flex: 1,
+    },
+    scrollThumb: {
+        position: 'absolute',
+        right: 2,
+        top: 0,
+        width: 3,
+        borderRadius: 1.5,
+        backgroundColor: Colors.textTertiary,
     },
     scrollContent: {
         paddingHorizontal: 16,
