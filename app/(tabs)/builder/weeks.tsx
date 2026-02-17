@@ -308,7 +308,53 @@ export default function Weeks() {
         setShowSyncModal(false);
     };
 
+    const validateProgram = (): string | null => {
+        for (let wi = 0; wi < weekData.length; wi++) {
+            const week = weekData[wi];
+            const dayNames = new Map<string, number>();
+
+            for (let di = 0; di < week.days.length; di++) {
+                const day = week.days[di];
+                const dayLabel = `${week.name}, ${day.defaultName}`;
+                const name = day.customName.trim();
+
+                if (!name) {
+                    return `${dayLabel} has no name. Every day needs a name.`;
+                }
+
+                const nameLower = name.toLowerCase();
+                if (dayNames.has(nameLower)) {
+                    const prevIdx = dayNames.get(nameLower)!;
+                    return `${week.name} has duplicate day name "${name}" (Day ${prevIdx + 1} and Day ${di + 1}).`;
+                }
+                dayNames.set(nameLower, di);
+
+                if (day.exercises.length === 0) {
+                    return `${dayLabel} ("${name}") has no exercises.`;
+                }
+
+                for (let ei = 0; ei < day.exercises.length; ei++) {
+                    const ex = day.exercises[ei];
+                    const exLabel = `Exercise ${ei + 1} in ${dayLabel}`;
+
+                    if (!ex.name.trim()) {
+                        return `${exLabel} ("${name}") has no name.`;
+                    }
+                    if (!ex.repRange.trim()) {
+                        return `${ex.name} in ${dayLabel} has no rep range.`;
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
     const handleSave = () => {
+        const error = validateProgram();
+        if (error) {
+            setSaveModal({ title: 'Validation Error', message: error });
+            return;
+        }
         setShowSaveConfirm(true);
     };
 

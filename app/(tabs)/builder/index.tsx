@@ -11,17 +11,22 @@ export default function CreateScreen() {
   const [name, setName] = useState('')
   const [duration, setDuration] = useState('')
   const [daysPerWeek, setDaysPerWeek] = useState('')
+  const [error, setError] = useState('')
 
   useFocusEffect(
     useCallback(() => {
       setName('')
       setDuration('')
       setDaysPerWeek('')
+      setError('')
     }, [])
   )
 
   const handleNext = () => {
-    if (!name || !duration || !daysPerWeek) return
+    if (!name.trim()) { setError('Program name is required.'); return }
+    if (!duration) { setError('Number of weeks is required.'); return }
+    if (!daysPerWeek) { setError('Days per week is required.'); return }
+    setError('')
 
     router.push({
       pathname: '/builder/weeks',
@@ -73,8 +78,16 @@ export default function CreateScreen() {
               placeholder="12"
               placeholderTextColor={Colors.textTertiary}
               value={duration}
-              onChangeText={setDuration}
+              onChangeText={(t) => {
+                const digits = t.replace(/[^0-9]/g, '')
+                const n = parseInt(digits, 10)
+                if (digits === '') { setDuration(''); setError(''); return }
+                if (n > 24) { setError('Maximum 24 weeks allowed.'); return }
+                setDuration(digits)
+                setError('')
+              }}
               keyboardType="number-pad"
+              maxLength={2}
               style={styles.input}
             />
           </View>
@@ -85,12 +98,23 @@ export default function CreateScreen() {
               placeholder="5"
               placeholderTextColor={Colors.textTertiary}
               value={daysPerWeek}
-              onChangeText={setDaysPerWeek}
+              onChangeText={(t) => {
+                const digits = t.replace(/[^0-9]/g, '')
+                const n = parseInt(digits, 10)
+                if (digits === '') { setDaysPerWeek(''); setError(''); return }
+                if (n > 20) { setError('Maximum 20 days per week allowed.'); return }
+                setDaysPerWeek(digits)
+                setError('')
+              }}
               keyboardType="number-pad"
+              maxLength={2}
               style={styles.input}
             />
           </View>
         </View>
+
+        {/* Error */}
+        {error !== '' && <Text style={styles.errorText}>{error}</Text>}
 
         {/* Button */}
         <Pressable onPress={handleNext} style={styles.button}>
@@ -177,6 +201,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 20,
+  },
+
+  // Error
+  errorText: {
+    fontSize: 13,
+    color: Colors.accent,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: -8,
   },
 
   // Button
