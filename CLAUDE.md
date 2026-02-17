@@ -66,8 +66,8 @@ docs/
 
 - **Builder**: `builder/index.tsx` collects name/weeks/days (validated: max 24 weeks, max 20 days/week, name required) → pushes to `weeks.tsx` → user builds program → Save validates all weeks (day names required + unique per week, exercises required per day, exercise name + rep range required) → writes full tree to SQLite in one transaction → redirects to Dashboard
 - **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → three-dots menu per card with Edit and Delete options. Edit navigates to `(dashboard)/edit.tsx` (reuses `builder/weeks.tsx` on the dashboard stack). Delete shows confirmation modal.
-- **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session.
-- **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation.
+- **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session. Completed days are tappable to re-edit logged data.
+- **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" or tapping a completed day navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation. When editing a completed day, header shows "EDITING" and `completed_at` is preserved (not overwritten).
 - **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
 
 ### Path Aliasing
@@ -88,6 +88,7 @@ Single dark theme. All colors in `constants/theme.ts` — never hardcode colors.
 - Inputs: `surfaceElevated` bg, no border, `borderRadius: 12`, `placeholderTextColor={Colors.textTertiary}`
 - Functional components with hooks, types at top of file
 - **Modals**: Use `OverlayModal` component (not RN `Modal`) to avoid Android navigation bar flash with `edgeToEdgeEnabled`. Supports fade animation, frozen content during close, single/multi-button layouts.
+- **Navigation performance**: Dashboard stack uses `animation: 'fade'` + `enableFreeze(true)` from `react-native-screens`. Heavy screens defer data loading with `InteractionManager.runAfterInteractions` to avoid janking the transition animation.
 
 ## Database
 
@@ -110,7 +111,6 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 ## Future Ideas
 
 ### Critical
-- **Undo day completion** — Allow uncompleting a saved workout to redo it.
 - **Edit program metadata** — Allow changing program name, weeks, and days/week during editing (currently only exercises/sets/day names are editable).
 - **Exercise library / autocomplete** — Avoid manual typing and typos that break history matching (exact name match).
 

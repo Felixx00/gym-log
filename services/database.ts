@@ -419,7 +419,7 @@ export async function saveDayLog(dayId: number, exercises: Exercise[]): Promise<
         }
 
         await db!.runAsync(
-            "UPDATE days SET completed = 1, completed_at = datetime('now') WHERE id = ?",
+            "UPDATE days SET completed = 1, completed_at = COALESCE(completed_at, datetime('now')) WHERE id = ?",
             [dayId]
         );
     });

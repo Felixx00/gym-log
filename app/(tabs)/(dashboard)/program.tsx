@@ -170,7 +170,18 @@ export default function ProgramScreen() {
                     const displayName = day.customName || day.defaultName;
 
                     const handleDayPress = () => {
-                        if (day.completed) return;
+                        if (day.completed) {
+                            router.push({
+                                pathname: '/day',
+                                params: {
+                                    dayId: day.id,
+                                    dayNumber: String(dayNumber),
+                                    dayName: displayName,
+                                    completed: '1',
+                                },
+                            });
+                            return;
+                        }
                         // Tap to select; tap again to deselect (back to auto)
                         setSelectedDayId((prev) => prev === day.id ? null : day.id);
                     };
@@ -229,7 +240,6 @@ export default function ProgramScreen() {
                                 <Pressable
                                     style={styles.dayCard}
                                     onPress={handleDayPress}
-                                    disabled={day.completed}
                                 >
                                     <Text style={styles.dayLabel}>DAY {dayNumber}</Text>
                                     <Text style={[

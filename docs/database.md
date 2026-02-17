@@ -16,7 +16,7 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 | `loadProgram(programId)` | Reconstructs full nested `Week[]` from DB |
 | `deleteProgram(programId)` | Deletes program + all children (CASCADE) |
 | `loadDay(dayId)` | Loads a single day with exercises and sets |
-| `saveDayLog(dayId, exercises)` | Saves logged set data (weight, reps, RIR achieved) + marks day completed |
+| `saveDayLog(dayId, exercises)` | Saves logged set data (weight, reps, RIR achieved) + marks day completed. Preserves original `completed_at` on re-save |
 | `markDayCompleted(dayId)` | Sets `completed = 1` and `completed_at = now` on a day |
 | `loadExerciseHistory(exerciseId)` | Returns per-week history for an exercise (matched by name + day name within same program, completed days only). Returns `HistoryWeek[]` |
 | `programNameExists(name, excludeId?)` | Checks for duplicate program names |

@@ -5,6 +5,7 @@ import {
     ActivityIndicator,
     Alert,
     Animated,
+    InteractionManager,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -20,11 +21,14 @@ import { Colors } from '@/constants/theme';
 import { loadDay, saveDayLog } from '@/services/database';
 
 export default function DayScreen() {
-    const { dayId, dayNumber, dayName } = useLocalSearchParams<{
+    const { dayId, dayNumber, dayName, completed } = useLocalSearchParams<{
         dayId: string;
         dayNumber: string;
         dayName: string;
+        completed?: string;
     }>();
+
+    const isEditing = completed === '1';
 
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [weightText, setWeightText] = useState<Record<string, string>>({});
@@ -47,23 +51,26 @@ export default function DayScreen() {
 
     useEffect(() => {
         if (!dayId) return;
-        loadDay(Number(dayId))
-            .then((day) => {
-                setExercises(day.exercises);
-                const initial: Record<string, string> = {};
-                for (const ex of day.exercises) {
-                    for (const s of ex.sets) {
-                        if (s.weight != null) initial[s.id] = String(s.weight);
+        const task = InteractionManager.runAfterInteractions(() => {
+            loadDay(Number(dayId))
+                .then((day) => {
+                    setExercises(day.exercises);
+                    const initial: Record<string, string> = {};
+                    for (const ex of day.exercises) {
+                        for (const s of ex.sets) {
+                            if (s.weight != null) initial[s.id] = String(s.weight);
+                        }
                     }
-                }
-                setWeightText(initial);
-            })
-            .catch((err) => {
-                console.error(err);
-                Alert.alert('Error', 'Failed to load workout.');
-                router.back();
-            })
-            .finally(() => setIsLoading(false));
+                    setWeightText(initial);
+                })
+                .catch((err) => {
+                    console.error(err);
+                    Alert.alert('Error', 'Failed to load workout.');
+                    router.back();
+                })
+                .finally(() => setIsLoading(false));
+        });
+        return () => task.cancel();
     }, [dayId]);
 
     const updateSet = (exerciseId: string, setId: string, changes: Partial<Set>) => {
@@ -124,7 +131,7 @@ export default function DayScreen() {
                     </Pressable>
                     <View>
                         <Text style={styles.dayTitle} numberOfLines={1}>{title}</Text>
-                        <Text style={styles.sessionLabel}>ACTIVE SESSION</Text>
+                        <Text style={styles.sessionLabel}>{isEditing ? 'EDITING' : 'ACTIVE SESSION'}</Text>
                     </View>
                 </View>
                 <Pressable
@@ -290,8 +297,11 @@ export default function DayScreen() {
 
             <OverlayModal
                 visible={showSaveConfirm}
-                title="Finish Workout"
-                message="Save your workout and mark this day as completed?"
+                title={isEditing ? 'Save Changes' : 'Finish Workout'}
+                message={isEditing
+                    ? 'Update the logged data for this workout?'
+                    : 'Save your workout and mark this day as completed?'
+                }
                 onClose={() => setShowSaveConfirm(false)}
                 buttons={[
                     { label: 'Cancel', onPress: () => setShowSaveConfirm(false), variant: 'cancel' },
