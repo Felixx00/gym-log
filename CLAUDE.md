@@ -24,6 +24,7 @@ npm run lint         # Linting
 - **Navigation**: Expo Router (file-based routing)
 - **Database**: SQLite via `expo-sqlite` (local persistence)
 - **UI**: React Navigation, Expo Vector Icons (Ionicons), Reanimated & Gesture Handler
+- **File I/O**: `expo-file-system` (new class-based API: `File`, `Paths`) + `expo-sharing`
 - **Theming**: Single dark theme — `constants/theme.ts`
 
 ## Architecture
@@ -32,20 +33,25 @@ npm run lint         # Linting
 app/
 ├── _layout.tsx                  # Root layout (theme + DB init)
 ├── (tabs)/
-│   ├── _layout.tsx              # Tab bar (Dashboard, Builder)
+│   ├── _layout.tsx              # Tab bar (Dashboard, Builder, Settings)
 │   ├── (dashboard)/
 │   │   ├── _layout.tsx          # Stack navigator for dashboard flow
 │   │   ├── index.tsx            # Dashboard: program list from DB
 │   │   ├── program.tsx          # Program view: timeline, progress, day selection
 │   │   ├── day.tsx              # Day workout: log sets (reps, weight, RIR)
 │   │   └── edit.tsx             # Edit program (re-exports builder/weeks.tsx)
-│   └── builder/
+│   ├── builder/
+│   │   ├── _layout.tsx          # Stack navigator
+│   │   ├── index.tsx            # Step 1: program metadata
+│   │   └── weeks.tsx            # Step 2: build weeks/days/exercises
+│   └── settings/
 │       ├── _layout.tsx          # Stack navigator
-│       ├── index.tsx            # Step 1: program metadata
-│       └── weeks.tsx            # Step 2: build weeks/days/exercises
+│       └── index.tsx            # Settings: export/import programs
 ├── modal.tsx
 services/
 ├── database.ts                  # SQLite service layer (all DB logic)
+├── exportTypes.ts               # Export JSON schema types (versioned)
+├── exportValidator.ts           # Import file validation
 └── devGenerator.ts              # Test program generator (dev tool)
 components/
 ├── OverlayModal.tsx             # Reusable animated modal overlay (replaces RN Modal)
@@ -68,6 +74,7 @@ docs/
 - **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → three-dots menu per card with Edit and Delete options. Edit navigates to `(dashboard)/edit.tsx` (reuses `builder/weeks.tsx` on the dashboard stack). Delete shows confirmation modal.
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session. Completed days are tappable to re-edit logged data.
 - **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" or tapping a completed day navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation. When editing a completed day, header shows "EDITING" and `completed_at` is preserved (not overwritten).
+- **Settings**: `settings/index.tsx` — two actions: Export All Programs (serializes all programs to JSON, opens native share sheet via `expo-sharing`) and Import Programs (picks JSON file via `expo-file-system` `File.pickFileAsync()`, validates structure, saves to DB). On import, programs with duplicate names are skipped and the user is notified in a summary modal.
 - **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
 
 ### Path Aliasing
@@ -121,7 +128,6 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 
 ### Quality of Life
 - **Rest timer** — Configurable countdown between sets.
-- **Data export / backup** — JSON or CSV export to prevent data loss (no cloud, single device).
 - **Reorder exercises during workout** — Swap order based on equipment availability.
 - **Program templates** — Pre-built starting programs (PPL, Upper/Lower, Full Body).
 

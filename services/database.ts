@@ -1,6 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 
 import type { Day, Exercise, ProgramSummary, Set, Week } from '@/components/builder/types';
+import type { ExportFile, ExportProgram } from './exportTypes';
+import { EXPORT_SCHEMA_VERSION } from './exportTypes';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -554,4 +556,101 @@ export async function programNameExists(
         );
 
     return (row?.cnt ?? 0) > 0;
+}
+
+// ────────────────────────── Export / Import ──────────────────────────
+
+export async function exportAllPrograms(): Promise<ExportFile> {
+    if (!db) throw new Error('Database not initialized');
+
+    const rows = await db.getAllAsync<{ id: number }>(
+        'SELECT id FROM programs ORDER BY created_at ASC'
+    );
+
+    const programs: ExportProgram[] = [];
+
+    for (const row of rows) {
+        const prog = await loadProgram(row.id);
+        programs.push({
+            name: prog.name,
+            duration: prog.duration,
+            daysPerWeek: prog.daysPerWeek,
+            weeks: prog.weeks.map((w) => ({
+                name: w.name,
+                days: w.days.map((d) => ({
+                    defaultName: d.defaultName,
+                    customName: d.customName,
+                    completed: d.completed || undefined,
+                    completedAt: d.completedAt,
+                    exercises: d.exercises.map((e) => ({
+                        name: e.name,
+                        repRange: e.repRange,
+                        notes: e.notes,
+                        sets: e.sets.map((s) => ({
+                            rir: s.rir,
+                            technique: s.technique || undefined,
+                            weight: s.weight,
+                            repsDone: s.repsDone,
+                            rirAchieved: s.rirAchieved,
+                        })),
+                    })),
+                })),
+            })),
+        });
+    }
+
+    return {
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: new Date().toISOString(),
+        programs,
+    };
+}
+
+export async function importPrograms(
+    data: ExportFile
+): Promise<{ imported: string[]; skipped: string[] }> {
+    if (!db) throw new Error('Database not initialized');
+
+    const imported: string[] = [];
+    const skipped: string[] = [];
+
+    for (const prog of data.programs) {
+        const exists = await programNameExists(prog.name);
+        if (exists) {
+            skipped.push(prog.name);
+            continue;
+        }
+
+        const weeks: Week[] = prog.weeks.map((w, wi) => ({
+            id: `import-w${wi}`,
+            name: w.name,
+            days: w.days.map((d, di) => ({
+                id: `import-d${wi}-${di}`,
+                defaultName: d.defaultName,
+                customName: d.customName,
+                isOpen: false,
+                completed: d.completed ?? false,
+                completedAt: d.completedAt,
+                exercises: d.exercises.map((e, ei) => ({
+                    id: `import-e${wi}-${di}-${ei}`,
+                    name: e.name,
+                    repRange: e.repRange,
+                    notes: e.notes,
+                    sets: e.sets.map((s, si) => ({
+                        id: `import-s${wi}-${di}-${ei}-${si}`,
+                        rir: s.rir,
+                        technique: s.technique,
+                        weight: s.weight,
+                        repsDone: s.repsDone,
+                        rirAchieved: s.rirAchieved,
+                    })),
+                })),
+            })),
+        }));
+
+        await saveProgram(prog.name, prog.duration, prog.daysPerWeek, weeks);
+        imported.push(prog.name);
+    }
+
+    return { imported, skipped };
 }

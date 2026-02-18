@@ -16,6 +16,7 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen name="(dashboard)" options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="grid" size={24} color={color} /> }} />
       <Tabs.Screen name="builder" options={{ title: 'Builder', tabBarIcon: ({ color }) => <Ionicons name="construct" size={24} color={color} /> }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={24} color={color} /> }} />
     </Tabs>
   );
 }

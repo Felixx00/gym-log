@@ -20,6 +20,8 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 | `markDayCompleted(dayId)` | Sets `completed = 1` and `completed_at = now` on a day |
 | `loadExerciseHistory(exerciseId)` | Returns per-week history for an exercise (matched by name + day name within same program, completed days only). Returns `HistoryWeek[]` |
 | `programNameExists(name, excludeId?)` | Checks for duplicate program names |
+| `exportAllPrograms()` | Returns `ExportFile` with all programs serialized (strips IDs/UI state). Uses `loadProgram()` per program |
+| `importPrograms(data)` | Imports programs from `ExportFile`. Skips duplicate names. Returns `{ imported: string[], skipped: string[] }` |
 
 ### Design Decisions
 
