@@ -466,6 +466,7 @@ export default function Weeks() {
                 style={styles.daysContainer}
                 contentContainerStyle={styles.daysContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {activeWeekObj.days.map((day) => (
                     <DaySection

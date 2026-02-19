@@ -53,6 +53,8 @@ services/
 ├── exportTypes.ts               # Export JSON schema types (versioned)
 ├── exportValidator.ts           # Import file validation
 └── devGenerator.ts              # Test program generator (dev tool)
+data/
+└── exerciseSeed.json            # ~180 built-in exercises for exercise library
 components/
 ├── OverlayModal.tsx             # Reusable animated modal overlay (replaces RN Modal)
 ├── ExerciseHistorySheet.tsx     # Draggable bottom sheet for exercise history
@@ -60,6 +62,7 @@ components/
     ├── types.ts                 # Set, Exercise, Day, Week, ProgramSummary
     ├── DaySection.tsx           # Day accordion component
     ├── ExerciseCard.tsx         # Exercise editing card
+    ├── ExerciseAutocomplete.tsx # Autocomplete input for exercise names
     └── index.ts                 # Barrel exports
 constants/
 └── theme.ts                     # Color palette
@@ -101,9 +104,11 @@ Single dark theme. All colors in `constants/theme.ts` — never hardcode colors.
 
 SQLite via `expo-sqlite`. Service layer in `services/database.ts`. See `docs/database.md` for schema, migrations, and API details.
 
-**5 tables**: `programs` → `weeks` → `days` → `exercises` → `sets` (all CASCADE delete)
+**6 tables**: `programs` → `weeks` → `days` → `exercises` → `sets` (all CASCADE delete) + standalone `exercise_library`
 
 Program names must be unique. `completed` and `completed_at` on days track workout progress. Set logging fields: `weight` (decimal), `reps_done` (integer), `rir_done` (0/1 boolean — RIR achieved, not a number). `exercises.notes` stores per-exercise annotations. Dashboard derives week/day counts from actual child rows (not `programs.duration`/`programs.days_per_week` metadata).
+
+**Exercise Library**: `exercise_library` table stores exercise names for autocomplete. Seeded with ~180 built-in exercises from `data/exerciseSeed.json` on first migration. Names are `UNIQUE COLLATE NOCASE`. When a program is saved, any new exercise names are auto-inserted with `INSERT OR IGNORE` as `is_custom=1`. The `ExerciseAutocomplete` component in the builder queries this table with prefix `LIKE` matching, showing up to 10 suggestions ordered by custom-first then alphabetical.
 
 ## Validation
 
@@ -119,7 +124,6 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 
 ### Critical
 - **Edit program metadata** — Allow changing program name, weeks, and days/week during editing (currently only exercises/sets/day names are editable).
-- **Exercise library / autocomplete** — Avoid manual typing and typos that break history matching (exact name match).
 
 ### High Value
 - **Duplicate program** — Copy a program to repeat a cycle with tweaks.

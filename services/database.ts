@@ -7,7 +7,7 @@ import { EXPORT_SCHEMA_VERSION } from './exportTypes';
 let db: SQLite.SQLiteDatabase | null = null;
 
 const DB_NAME = 'gymlog.db';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 4;
 
 // ────────────────────────── Init & Migrations ──────────────────────────
 
@@ -38,6 +38,14 @@ async function migrate(fromVersion: number): Promise<void> {
     if (fromVersion < 2) {
         await applyV2();
         await db.execAsync('PRAGMA user_version = 2;');
+    }
+    if (fromVersion < 3) {
+        await applyV3();
+        await db.execAsync('PRAGMA user_version = 3;');
+    }
+    if (fromVersion < 4) {
+        await applyV4();
+        await db.execAsync('PRAGMA user_version = 4;');
     }
 }
 
@@ -100,6 +108,83 @@ async function applyV2(): Promise<void> {
     await db.execAsync(
         `ALTER TABLE exercises ADD COLUMN notes TEXT NOT NULL DEFAULT '';`
     );
+}
+
+async function applyV3(): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+
+    await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS exercise_library (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            muscle_group TEXT NOT NULL DEFAULT '',
+            is_custom INTEGER NOT NULL DEFAULT 0
+        );
+    `);
+
+    // Seed built-in exercises from JSON
+    const seedData: { name: string; muscle_group: string }[] =
+        require('@/data/exerciseSeed.json');
+
+    for (const exercise of seedData) {
+        await db.runAsync(
+            'INSERT OR IGNORE INTO exercise_library (name, muscle_group, is_custom) VALUES (?, ?, 0)',
+            [exercise.name, exercise.muscle_group]
+        );
+    }
+
+    // Backfill: insert any exercise names already used in existing programs
+    await db.execAsync(`
+        INSERT OR IGNORE INTO exercise_library (name, muscle_group, is_custom)
+        SELECT DISTINCT e.name, '', 1
+        FROM exercises e
+        WHERE e.name != ''
+    `);
+}
+
+async function applyV4(): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+
+    // Re-seed: insert any new built-in exercises added to the seed file
+    const seedData: { name: string; muscle_group: string }[] =
+        require('@/data/exerciseSeed.json');
+
+    for (const exercise of seedData) {
+        await db.runAsync(
+            'INSERT OR IGNORE INTO exercise_library (name, muscle_group, is_custom) VALUES (?, ?, 0)',
+            [exercise.name, exercise.muscle_group]
+        );
+    }
+}
+
+// ────────────────────────── Exercise Library ──────────────────────────
+
+export async function searchExerciseLibrary(query: string): Promise<string[]> {
+    if (!db) throw new Error('Database not initialized');
+    if (!query.trim()) return [];
+
+    const rows = await db.getAllAsync<{ name: string }>(
+        `SELECT name FROM exercise_library
+         WHERE name LIKE ?
+         ORDER BY is_custom DESC, name ASC
+         LIMIT 10`,
+        [`${query.trim()}%`]
+    );
+
+    return rows.map((r) => r.name);
+}
+
+async function insertExerciseNames(names: string[]): Promise<void> {
+    if (!db) return;
+
+    for (const name of names) {
+        if (name.trim()) {
+            await db.runAsync(
+                'INSERT OR IGNORE INTO exercise_library (name, muscle_group, is_custom) VALUES (?, ?, 1)',
+                [name.trim(), '']
+            );
+        }
+    }
 }
 
 // ────────────────────────── Save ──────────────────────────
@@ -170,6 +255,16 @@ export async function saveProgram(
             }
         }
     });
+
+    // Auto-insert exercise names into the library
+    try {
+        const exerciseNames = weeks.flatMap((w) =>
+            w.days.flatMap((d) => d.exercises.map((e) => e.name))
+        );
+        await insertExerciseNames(exerciseNames);
+    } catch {
+        // Non-critical: library update failure should not affect program save
+    }
 
     return programId;
 }

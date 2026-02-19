@@ -76,18 +76,19 @@ export function DaySection({
                 <View style={styles.dayDivider} />
                 <View style={styles.dayContent}>
 
-                    {day.exercises.map((exercise) => (
-                        <ExerciseCard
-                            key={exercise.id}
-                            exercise={exercise}
-                            onUpdate={(changes) => onUpdateExercise(exercise.id, changes)}
-                            onDelete={() => onDeleteExercise(exercise.id)}
-                            onAddSet={() => onAddSet(exercise.id)}
-                            onUpdateSet={(setId, changes) =>
-                                onUpdateSet(exercise.id, setId, changes)
-                            }
-                            onDeleteSet={(setId) => onDeleteSet(exercise.id, setId)}
-                        />
+                    {day.exercises.map((exercise, index) => (
+                        <View key={exercise.id} style={{ zIndex: day.exercises.length - index }}>
+                            <ExerciseCard
+                                exercise={exercise}
+                                onUpdate={(changes) => onUpdateExercise(exercise.id, changes)}
+                                onDelete={() => onDeleteExercise(exercise.id)}
+                                onAddSet={() => onAddSet(exercise.id)}
+                                onUpdateSet={(setId, changes) =>
+                                    onUpdateSet(exercise.id, setId, changes)
+                                }
+                                onDeleteSet={(setId) => onDeleteSet(exercise.id, setId)}
+                            />
+                        </View>
                     ))}
 
                     {/* Add Exercise Button */}
@@ -110,7 +111,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         borderRadius: 14,
         backgroundColor: Colors.surface,
-        overflow: 'hidden',
     },
     daySectionOpen: {},
     dayHeader: {

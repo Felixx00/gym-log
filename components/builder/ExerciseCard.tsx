@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { ExerciseAutocomplete } from './ExerciseAutocomplete';
 import { Exercise, Set } from './types';
 
 type ExerciseCardProps = {
@@ -26,9 +27,7 @@ export function ExerciseCard({
             {/* Exercise Header Row */}
             <View style={styles.exerciseHeaderRow}>
                 <View style={styles.exerciseBullet} />
-                <TextInput
-                    placeholder="Exercise Name"
-                    placeholderTextColor={Colors.textTertiary}
+                <ExerciseAutocomplete
                     value={exercise.name}
                     onChangeText={(text) => onUpdate({ name: text })}
                     style={styles.exerciseNameInput}

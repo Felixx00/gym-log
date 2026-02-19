@@ -22,15 +22,17 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 | `programNameExists(name, excludeId?)` | Checks for duplicate program names |
 | `exportAllPrograms()` | Returns `ExportFile` with all programs serialized (strips IDs/UI state). Uses `loadProgram()` per program |
 | `importPrograms(data)` | Imports programs from `ExportFile`. Skips duplicate names. Returns `{ imported: string[], skipped: string[] }` |
+| `searchExerciseLibrary(query)` | Returns up to 10 exercise names matching prefix. Custom exercises sorted first, then alphabetical. Returns `string[]` |
 
 ### Design Decisions
 
 - **Delete + re-insert children on save** rather than diffing. Simpler and correct for nested trees with reorder/add/remove.
 - **4 separate SELECTs on load** (weeks, days, exercises, sets) to avoid Cartesian joins. Assembles tree bottom-up with Maps.
-- **Migrations** via `PRAGMA user_version`. Current version: 2. PRAGMA is set outside transactions (it's not transactional in SQLite).
+- **Migrations** via `PRAGMA user_version`. Current version: 4. PRAGMA is set outside transactions (it's not transactional in SQLite).
 - **IDs**: DB uses `INTEGER PRIMARY KEY AUTOINCREMENT`. In-memory types use `string` IDs. Service layer converts with `String(id)`.
+- **Exercise library auto-population**: `saveProgram()` calls `insertExerciseNames()` after the main transaction. Uses `INSERT OR IGNORE` so duplicates are silently skipped. This is wrapped in a try/catch — library update failure never blocks program save.
 
-## Schema (v2)
+## Schema (v4)
 
 ```sql
 programs
@@ -74,13 +76,22 @@ sets
   rir_done      INTEGER                   -- 0/1 boolean: RIR target achieved
 ```
 
-All foreign keys use `ON DELETE CASCADE`. `position` columns ensure ordering.
+exercise_library
+  id            INTEGER PRIMARY KEY AUTOINCREMENT
+  name          TEXT NOT NULL UNIQUE COLLATE NOCASE
+  muscle_group  TEXT DEFAULT ''      -- e.g. "Chest", "Back"
+  is_custom     INTEGER DEFAULT 0    -- 0 = built-in seed, 1 = user-created
+```
+
+All foreign keys on program tables use `ON DELETE CASCADE`. `position` columns ensure ordering. `exercise_library` is a standalone table (no foreign keys).
 
 `completed` and `completed_at` on days track workout progress. `weight`, `reps_done`, `rir_done` on sets are written by the Day Workout page on save. `rir_done` is a boolean (0/1) indicating whether the target RIR was achieved (not a numeric RIR value).
 
 ### Migrations
 
-- **v1**: Initial schema (all 5 tables)
+- **v1**: Initial schema (all 5 program tables)
 - **v2**: Added `exercises.notes` column
+- **v3**: Created `exercise_library` table, seeded ~180 built-in exercises from `data/exerciseSeed.json`, backfilled existing exercise names from programs as `is_custom=1`
+- **v4**: Re-seeded exercise library with expanded seed data (added ~80 new exercises)
 
 Note: `programs.duration` and `programs.days_per_week` are metadata columns written on save, but `loadProgramList()` derives these values from actual child rows to avoid sync issues.
