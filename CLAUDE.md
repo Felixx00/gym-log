@@ -88,9 +88,7 @@ docs/
 
 Single dark theme. All colors in `constants/theme.ts` — never hardcode colors.
 
-**Key colors**: Background `#0F0F0F` · Surface `#1A1A1A` · Elevated `#242424` · Accent `#E11D48` · Text `#FAFAFA` / `#9E9E9E` / `#666666` · Border `#2A2A2A`
-
-**Builder-specific reds**: Title text `#DF1B46` · Separator `#C91A41` · Button `#E11D48`
+**Key colors**: Background `#0F0F0F` · Surface `#1A1A1A` · Elevated `#242424` · Accent `#FF3E3E` · Text `#FAFAFA` / `#9E9E9E` / `#666666` · Border `#2A2A2A`
 
 **Conventions**:
 - `StyleSheet.create()` at bottom of files

@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   titleAccent: {
-    color: '#DF1B46',
+    color: Colors.accent,
     fontWeight: '800',
   },
   subtitle: {
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   separator: {
     width: 40,
     height: 3,
-    backgroundColor: '#C91A41',
+    backgroundColor: Colors.accentHover,
     marginTop: 20,
     borderRadius: 2,
   },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 14,
     gap: 8,
-    backgroundColor: '#E11D48',
+    backgroundColor: Colors.accent,
     marginTop: 16,
   },
   buttonText: {
