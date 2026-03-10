@@ -75,7 +75,7 @@ docs/
 
 ### Key Flows
 
-- **Library**: `library/index.tsx` shows all programs with a "+ New Routine" button. Cards are non-tappable (view-only); three-dots menu provides Edit and Delete. "+ New Routine" navigates to `library/create.tsx` which collects name/weeks/days (validated: max 24 weeks, max 20 days/week, name required) → pushes to `weeks.tsx` → user builds program → Save validates all weeks (day names required + unique per week, exercises required per day, exercise name + rep range required) → writes full tree to SQLite in one transaction → returns to Library list.
+- **Library**: `library/index.tsx` shows all programs with a "+ New Routine" button. Cards are non-tappable (view-only); three-dots menu provides Edit and Delete. "+ New Routine" navigates to `library/create.tsx` which collects name/weeks/days (name required, weeks via slider 4–20 default 12, days/week via pill selector 3–12 default 5) → pushes to `weeks.tsx` → user builds program → Save validates all weeks (day names required + unique per week, exercises required per day, exercise name + rep range required) → writes full tree to SQLite in one transaction → returns to Library list.
 - **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → three-dots menu per card with Edit and Delete options. Edit navigates to `(dashboard)/edit.tsx` (reuses `library/weeks.tsx` on the dashboard stack). Delete shows confirmation modal.
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session. Completed days are tappable to re-edit logged data.
 - **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" or tapping a completed day navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation. When editing a completed day, header shows "EDITING" and `completed_at` is preserved (not overwritten).
@@ -112,7 +112,7 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 
 ## Validation
 
-- **Create step 1** (`library/create.tsx`): Program name required, weeks clamped 1–24, days/week clamped 1–20. Inline error text shown below inputs.
+- **Create step 1** (`library/create.tsx`): Program name required (inline error text). Weeks selected via native slider (4–20, default 12, `@react-native-community/slider`). Days/week selected via horizontal pill row (3–12, default 5).
 - **Create step 2 / Edit** (`library/weeks.tsx`): On save, validates all weeks — every day must have a non-empty name, day names must be unique within each week (case-insensitive), every day must have at least one exercise, every exercise must have a name and rep range. First error shown in `OverlayModal`.
 
 ## Current Limitations

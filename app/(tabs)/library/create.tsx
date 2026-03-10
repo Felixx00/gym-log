@@ -1,40 +1,43 @@
+import Slider from '@react-native-community/slider'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { Colors } from '@/constants/theme'
+
+const WEEKS_MIN = 4
+const WEEKS_MAX = 20
+const WEEKS_DEFAULT = 12
+const DAYS_MIN = 3
+const DAYS_MAX = 12
+const DAYS_DEFAULT = 5
+const DAYS_RANGE = Array.from({ length: DAYS_MAX - DAYS_MIN + 1 }, (_, i) => DAYS_MIN + i)
 
 export default function CreateScreen() {
   const router = useRouter()
 
   const [name, setName] = useState('')
-  const [duration, setDuration] = useState('')
-  const [daysPerWeek, setDaysPerWeek] = useState('')
+  const [duration, setDuration] = useState(WEEKS_DEFAULT)
+  const [daysPerWeek, setDaysPerWeek] = useState(DAYS_DEFAULT)
   const [error, setError] = useState('')
 
   useFocusEffect(
     useCallback(() => {
       setName('')
-      setDuration('')
-      setDaysPerWeek('')
+      setDuration(WEEKS_DEFAULT)
+      setDaysPerWeek(DAYS_DEFAULT)
       setError('')
     }, [])
   )
 
   const handleNext = () => {
     if (!name.trim()) { setError('Program name is required.'); return }
-    if (!duration) { setError('Number of weeks is required.'); return }
-    if (!daysPerWeek) { setError('Days per week is required.'); return }
     setError('')
 
     router.push({
       pathname: '/library/weeks',
-      params: {
-        name,
-        duration: Number(duration),
-        daysPerWeek: Number(daysPerWeek),
-      },
+      params: { name, duration, daysPerWeek },
     })
   }
 
@@ -59,7 +62,7 @@ export default function CreateScreen() {
           <View style={styles.separator} />
         </View>
 
-        {/* Inputs */}
+        {/* Program Name */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>PROGRAM NAME</Text>
           <TextInput
@@ -71,46 +74,52 @@ export default function CreateScreen() {
           />
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.inputGroupHalf}>
+        {/* Weeks Slider */}
+        <View style={styles.inputGroup}>
+          <View style={styles.labelRow}>
             <Text style={styles.label}>WEEKS</Text>
-            <TextInput
-              placeholder="12"
-              placeholderTextColor={Colors.textTertiary}
-              value={duration}
-              onChangeText={(t) => {
-                const digits = t.replace(/[^0-9]/g, '')
-                const n = parseInt(digits, 10)
-                if (digits === '') { setDuration(''); setError(''); return }
-                if (n > 24) { setError('Maximum 24 weeks allowed.'); return }
-                setDuration(digits)
-                setError('')
-              }}
-              keyboardType="number-pad"
-              maxLength={2}
-              style={styles.input}
-            />
+            <Text style={styles.sliderValue}>{duration}</Text>
           </View>
+          <Slider
+            minimumValue={WEEKS_MIN}
+            maximumValue={WEEKS_MAX}
+            step={1}
+            value={duration}
+            onValueChange={(v) => setDuration(Math.round(v))}
+            minimumTrackTintColor={Colors.accent}
+            maximumTrackTintColor={Colors.surfaceElevated}
+            thumbTintColor={Colors.textPrimary}
+            style={styles.slider}
+          />
+          <View style={styles.sliderLabels}>
+            <Text style={styles.sliderLabelText}>{WEEKS_MIN}</Text>
+            <Text style={styles.sliderLabelText}>{WEEKS_MAX}</Text>
+          </View>
+        </View>
 
-          <View style={styles.inputGroupHalf}>
-            <Text style={styles.label}>DAYS / WEEK</Text>
-            <TextInput
-              placeholder="5"
-              placeholderTextColor={Colors.textTertiary}
-              value={daysPerWeek}
-              onChangeText={(t) => {
-                const digits = t.replace(/[^0-9]/g, '')
-                const n = parseInt(digits, 10)
-                if (digits === '') { setDaysPerWeek(''); setError(''); return }
-                if (n > 20) { setError('Maximum 20 days per week allowed.'); return }
-                setDaysPerWeek(digits)
-                setError('')
-              }}
-              keyboardType="number-pad"
-              maxLength={2}
-              style={styles.input}
-            />
-          </View>
+        {/* Days/Week Pills */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>DAYS / WEEK</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.pillsContainer}
+          >
+            {DAYS_RANGE.map((n) => {
+              const isActive = n === daysPerWeek
+              return (
+                <Pressable
+                  key={n}
+                  style={[styles.pill, isActive && styles.pillActive]}
+                  onPress={() => setDaysPerWeek(n)}
+                >
+                  <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
+                    {n}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
         </View>
 
         {/* Error */}
@@ -180,15 +189,18 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 20,
   },
-  inputGroupHalf: {
-    flex: 1,
-  },
   label: {
     fontSize: 11,
     fontWeight: '600',
     color: Colors.textSecondary,
     letterSpacing: 1.2,
     marginBottom: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0,
   },
   input: {
     borderRadius: 12,
@@ -197,10 +209,53 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceElevated,
     color: Colors.textPrimary,
   },
-  row: {
+
+  // Slider
+  slider: {
+    height: 40,
+    marginHorizontal: -8,
+  },
+  sliderValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  sliderLabels: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    justifyContent: 'space-between',
+    marginTop: -4,
+    paddingHorizontal: 2,
+  },
+  sliderLabelText: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+  },
+
+  // Pills
+  pillsContainer: {
+    gap: 8,
+  },
+  pill: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pillActive: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  pillText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  pillTextActive: {
+    color: Colors.textPrimary,
   },
 
   // Error
