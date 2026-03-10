@@ -525,8 +525,12 @@ export default function Weeks() {
                     const wasSuccess = saveModal?.title === 'Saved';
                     setSaveModal(null);
                     if (wasSuccess) {
-                        router.back();
-                        router.navigate('/');
+                        if (isEditMode) {
+                            router.back();
+                        } else {
+                            router.back();
+                            router.back();
+                        }
                     }
                 }}
                 buttons={[{
@@ -535,8 +539,12 @@ export default function Weeks() {
                         const wasSuccess = saveModal?.title === 'Saved';
                         setSaveModal(null);
                         if (wasSuccess) {
-                            router.back();
-                            router.navigate('/');
+                            if (isEditMode) {
+                                router.back();
+                            } else {
+                                router.back();
+                                router.back();
+                            }
                         }
                     },
                     variant: 'confirm',

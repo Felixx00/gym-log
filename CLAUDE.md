@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GymLog is a mobile workout tracker built with React Native and Expo. Users create workout program templates via the Builder, which are persisted locally with SQLite. The Day Workout page allows users to log sets (reps, weight, RIR achieved) during sessions.
+GymLog is a mobile workout tracker built with React Native and Expo. Users create workout program templates via the Library tab, which are persisted locally with SQLite. The Day Workout page allows users to log sets (reps, weight, RIR achieved) during sessions.
 
 ## Development Commands
 
@@ -33,17 +33,19 @@ npm run lint         # Linting
 app/
 ├── _layout.tsx                  # Root layout (theme + DB init)
 ├── (tabs)/
-│   ├── _layout.tsx              # Tab bar (Dashboard, Builder, Settings)
+│   ├── _layout.tsx              # Tab bar (Dashboard, Library, Settings)
 │   ├── (dashboard)/
 │   │   ├── _layout.tsx          # Stack navigator for dashboard flow
 │   │   ├── index.tsx            # Dashboard: program list from DB
 │   │   ├── program.tsx          # Program view: timeline, progress, day selection
 │   │   ├── day.tsx              # Day workout: log sets (reps, weight, RIR)
-│   │   └── edit.tsx             # Edit program (re-exports builder/weeks.tsx)
-│   ├── builder/
+│   │   └── edit.tsx             # Edit program (re-exports library/weeks.tsx)
+│   ├── library/
 │   │   ├── _layout.tsx          # Stack navigator
-│   │   ├── index.tsx            # Step 1: program metadata
-│   │   └── weeks.tsx            # Step 2: build weeks/days/exercises
+│   │   ├── index.tsx            # Library: program list + "New Routine" button
+│   │   ├── create.tsx           # Step 1: program metadata
+│   │   ├── weeks.tsx            # Step 2: build weeks/days/exercises
+│   │   └── edit.tsx             # Edit program (re-exports weeks.tsx)
 │   └── settings/
 │       ├── _layout.tsx          # Stack navigator
 │       └── index.tsx            # Settings: export/import programs
@@ -73,8 +75,8 @@ docs/
 
 ### Key Flows
 
-- **Builder**: `builder/index.tsx` collects name/weeks/days (validated: max 24 weeks, max 20 days/week, name required) → pushes to `weeks.tsx` → user builds program → Save validates all weeks (day names required + unique per week, exercises required per day, exercise name + rep range required) → writes full tree to SQLite in one transaction → redirects to Dashboard
-- **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → three-dots menu per card with Edit and Delete options. Edit navigates to `(dashboard)/edit.tsx` (reuses `builder/weeks.tsx` on the dashboard stack). Delete shows confirmation modal.
+- **Library**: `library/index.tsx` shows all programs with a "+ New Routine" button. Cards are non-tappable (view-only); three-dots menu provides Edit and Delete. "+ New Routine" navigates to `library/create.tsx` which collects name/weeks/days (validated: max 24 weeks, max 20 days/week, name required) → pushes to `weeks.tsx` → user builds program → Save validates all weeks (day names required + unique per week, exercises required per day, exercise name + rep range required) → writes full tree to SQLite in one transaction → returns to Library list.
+- **Dashboard**: loads program list on focus (weeks/days counts derived from actual data, not metadata columns) → three-dots menu per card with Edit and Delete options. Edit navigates to `(dashboard)/edit.tsx` (reuses `library/weeks.tsx` on the dashboard stack). Delete shows confirmation modal.
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session. Completed days are tappable to re-edit logged data.
 - **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" or tapping a completed day navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation. When editing a completed day, header shows "EDITING" and `completed_at` is preserved (not overwritten).
 - **Settings**: `settings/index.tsx` — two actions: Export All Programs (serializes all programs to JSON, opens native share sheet via `expo-sharing`) and Import Programs (picks JSON file via `expo-file-system` `File.pickFileAsync()`, validates structure, saves to DB). On import, programs with duplicate names are skipped and the user is notified in a summary modal.
@@ -110,8 +112,8 @@ Program names must be unique. `completed` and `completed_at` on days track worko
 
 ## Validation
 
-- **Builder step 1** (`builder/index.tsx`): Program name required, weeks clamped 1–24, days/week clamped 1–20. Inline error text shown below inputs.
-- **Builder step 2 / Edit** (`builder/weeks.tsx`): On save, validates all weeks — every day must have a non-empty name, day names must be unique within each week (case-insensitive), every day must have at least one exercise, every exercise must have a name and rep range. First error shown in `OverlayModal`.
+- **Create step 1** (`library/create.tsx`): Program name required, weeks clamped 1–24, days/week clamped 1–20. Inline error text shown below inputs.
+- **Create step 2 / Edit** (`library/weeks.tsx`): On save, validates all weeks — every day must have a non-empty name, day names must be unique within each week (case-insensitive), every day must have at least one exercise, every exercise must have a name and rep range. First error shown in `OverlayModal`.
 
 ## Current Limitations
 

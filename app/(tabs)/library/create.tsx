@@ -29,7 +29,7 @@ export default function CreateScreen() {
     setError('')
 
     router.push({
-      pathname: '/builder/weeks',
+      pathname: '/library/weeks',
       params: {
         name,
         duration: Number(duration),

@@ -16,15 +16,13 @@ import type { ProgramSummary } from '@/components/builder';
 import { OverlayModal } from '@/components/OverlayModal';
 import { Colors } from '@/constants/theme';
 import { deleteProgram, loadProgramList } from '@/services/database';
-import { generateTestProgram } from '@/services/devGenerator';
 
-export default function DashboardScreen() {
+export default function LibraryScreen() {
     const router = useRouter();
     const [programs, setPrograms] = useState<ProgramSummary[]>([]);
     const [menuTarget, setMenuTarget] = useState<ProgramSummary | null>(null);
     const [menuPos, setMenuPos] = useState({ top: 0 });
     const [deleteTarget, setDeleteTarget] = useState<ProgramSummary | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
 
     const menuAnim = useRef(new Animated.Value(0)).current;
 
@@ -73,35 +71,16 @@ export default function DashboardScreen() {
         }
     };
 
-    const handleGenerate = async () => {
-        setIsGenerating(true);
-        try {
-            await generateTestProgram();
-            loadProgramList().then(setPrograms).catch(console.error);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const handleOpen = (program: ProgramSummary) => {
-        router.push({
-            pathname: '/program',
-            params: { programId: program.id },
-        });
-    };
-
     const handleEdit = (program: ProgramSummary) => {
         setMenuTarget(null);
         router.push({
-            pathname: '/edit',
+            pathname: '/library/edit',
             params: { programId: program.id },
         });
     };
 
     const renderProgram = ({ item }: { item: ProgramSummary }) => (
-        <Pressable style={styles.card} onPress={() => handleOpen(item)}>
+        <View style={styles.card}>
             <View style={styles.accentBarWrapper}>
                 <View style={styles.accentBar} />
             </View>
@@ -129,7 +108,7 @@ export default function DashboardScreen() {
                     color={menuTarget?.id === item.id ? Colors.textPrimary : Colors.textTertiary}
                 />
             </Pressable>
-        </Pressable>
+        </View>
     );
 
     const dropdownScale = menuAnim.interpolate({
@@ -147,21 +126,17 @@ export default function DashboardScreen() {
                 <View style={styles.headerRow}>
                     <View>
                         <Text style={styles.title}>
-                            Your <Text style={styles.titleAccent}>Programs</Text>
+                            Your <Text style={styles.titleAccent}>Library</Text>
                         </Text>
-                        <Text style={styles.subtitle}>Select a routine to begin</Text>
+                        <Text style={styles.subtitle}>Manage your routines</Text>
                     </View>
                     <Pressable
-                        style={styles.generateButton}
-                        onPress={handleGenerate}
-                        disabled={isGenerating}
+                        style={styles.newButton}
+                        onPress={() => router.push('/library/create')}
                         hitSlop={6}
                     >
-                        <Ionicons
-                            name="flask-outline"
-                            size={20}
-                            color={isGenerating ? Colors.textTertiary : Colors.textSecondary}
-                        />
+                        <Ionicons name="add" size={20} color={Colors.textPrimary} />
+                        <Text style={styles.newButtonText}>New Routine</Text>
                     </Pressable>
                 </View>
             </View>
@@ -171,7 +146,7 @@ export default function DashboardScreen() {
                     <Ionicons name="barbell-outline" size={64} color={Colors.textTertiary} />
                     <Text style={styles.emptyTitle}>No programs yet</Text>
                     <Text style={styles.emptySubtitle}>
-                        Head to the Library tab to create your first workout program.
+                        Tap + New Routine to create your first program.
                     </Text>
                 </View>
             ) : (
@@ -256,14 +231,20 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
     },
-    generateButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: Colors.surface,
+    newButton: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 4,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 10,
+        backgroundColor: Colors.accent,
         marginTop: 4,
+    },
+    newButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: Colors.textPrimary,
     },
     title: {
         fontSize: 28,
