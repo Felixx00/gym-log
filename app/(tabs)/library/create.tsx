@@ -43,21 +43,19 @@ export default function CreateScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {/* Header with watermark */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
         <View style={styles.header}>
-          <Ionicons
-            name="construct-outline"
-            size={240}
-            color={Colors.surfaceElevated}
-            style={styles.watermark}
-          />
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>Build a </Text>
-            <Text style={[styles.title, styles.titleAccent]}>Program</Text>
+          <View style={styles.titleColumn}>
+            <Text style={styles.titleLight}>Build a</Text>
+            <Text style={styles.titleAccent}>Program</Text>
           </View>
           <Text style={styles.subtitle}>
-            Design your structured workout{'\n'}plan and track your evolution.
+            Design your structured workout plan and track your evolution.
           </Text>
           <View style={styles.separator} />
         </View>
@@ -87,7 +85,7 @@ export default function CreateScreen() {
             value={duration}
             onValueChange={(v) => setDuration(Math.round(v))}
             minimumTrackTintColor={Colors.accent}
-            maximumTrackTintColor={Colors.surfaceElevated}
+            maximumTrackTintColor={Colors.border}
             thumbTintColor={Colors.textPrimary}
             style={styles.slider}
           />
@@ -124,13 +122,13 @@ export default function CreateScreen() {
 
         {/* Error */}
         {error !== '' && <Text style={styles.errorText}>{error}</Text>}
+      </ScrollView>
 
-        {/* Button */}
-        <Pressable onPress={handleNext} style={styles.button}>
-          <Text style={styles.buttonText}>Next</Text>
-          <Ionicons name="arrow-forward" size={18} color={Colors.textPrimary} />
-        </Pressable>
-      </View>
+      {/* Button pinned to bottom */}
+      <Pressable onPress={handleNext} style={styles.button}>
+        <Text style={styles.buttonText}>Next</Text>
+        <Ionicons name="arrow-forward" size={20} color={Colors.background} />
+      </Pressable>
     </View>
   )
 }
@@ -139,105 +137,101 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: 24,
-    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
-    width: '100%',
+    paddingTop: 48,
+    gap: 24,
   },
 
   // Header
   header: {
-    marginBottom: 48,
+    gap: 12,
   },
-  watermark: {
-    position: 'absolute',
-    top: -60,
-    left: -30,
-    opacity: 0.3,
+  titleColumn: {
+    gap: 2,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '700',
+  titleLight: {
+    fontSize: 40,
+    fontWeight: '300',
     color: Colors.textPrimary,
-    letterSpacing: 0.3,
+    letterSpacing: -1,
   },
   titleAccent: {
+    fontSize: 48,
+    fontWeight: '900',
     color: Colors.accent,
-    fontWeight: '800',
+    letterSpacing: -1,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
-    lineHeight: 22,
-    letterSpacing: 0.2,
+    lineHeight: 20,
   },
   separator: {
     width: 40,
     height: 3,
-    backgroundColor: Colors.accentHover,
-    marginTop: 20,
+    backgroundColor: Colors.accent,
     borderRadius: 2,
   },
 
   // Inputs
   inputGroup: {
-    marginBottom: 20,
+    gap: 10,
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: Colors.textSecondary,
-    letterSpacing: 1.2,
-    marginBottom: 8,
+    letterSpacing: 2,
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 0,
+    alignItems: 'flex-end',
   },
   input: {
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    backgroundColor: Colors.surfaceElevated,
+    height: 56,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    fontSize: 15,
+    backgroundColor: Colors.surface,
     color: Colors.textPrimary,
   },
 
   // Slider
   slider: {
-    height: 40,
+    height: 36,
     marginHorizontal: -8,
   },
   sliderValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 36,
+    fontWeight: '300',
     color: Colors.textPrimary,
+    letterSpacing: -1,
+    lineHeight: 40,
   },
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: -4,
-    paddingHorizontal: 2,
   },
   sliderLabelText: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: Colors.textSecondary,
   },
 
   // Pills
   pillsContainer: {
-    gap: 8,
+    gap: 10,
   },
   pill: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -250,21 +244,21 @@ const styles = StyleSheet.create({
     borderColor: Colors.accent,
   },
   pillText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
   },
   pillTextActive: {
-    color: Colors.textPrimary,
+    fontWeight: '900',
+    color: Colors.background,
   },
 
   // Error
   errorText: {
     fontSize: 13,
-    color: Colors.accent,
+    color: Colors.error,
     fontWeight: '500',
     textAlign: 'center',
-    marginBottom: -8,
   },
 
   // Button
@@ -272,16 +266,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 22,
-    paddingHorizontal: 18,
-    borderRadius: 14,
-    gap: 8,
+    height: 60,
+    borderRadius: 16,
+    gap: 10,
     backgroundColor: Colors.accent,
     marginTop: 16,
   },
   buttonText: {
-    color: Colors.textPrimary,
-    fontSize: 16,
+    color: Colors.background,
+    fontSize: 18,
     fontWeight: '700',
   },
 })
