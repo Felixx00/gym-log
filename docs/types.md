@@ -44,6 +44,7 @@ type ProgramSummary = {
     duration: number;       // total weeks
     daysPerWeek: number;
     createdAt: string;      // ISO timestamp
+    isActive: boolean;      // whether this is the active routine
 };
 ```
 

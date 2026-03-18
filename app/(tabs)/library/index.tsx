@@ -4,9 +4,9 @@ import { useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
     Animated,
-    FlatList,
     GestureResponderEvent,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -15,7 +15,7 @@ import {
 import type { ProgramSummary } from '@/components/builder';
 import { OverlayModal } from '@/components/OverlayModal';
 import { Colors } from '@/constants/theme';
-import { deleteProgram, loadProgramList } from '@/services/database';
+import { deleteProgram, loadProgramList, setActiveProgram } from '@/services/database';
 
 export default function LibraryScreen() {
     const router = useRouter();
@@ -33,6 +33,8 @@ export default function LibraryScreen() {
             loadProgramList().then(setPrograms).catch(console.error);
         }, [])
     );
+
+    const activeProgram = programs.find((p) => p.isActive) ?? null;
 
     const openMenu = (item: ProgramSummary, event: GestureResponderEvent) => {
         if (menuTarget?.id === item.id) {
@@ -79,8 +81,21 @@ export default function LibraryScreen() {
         });
     };
 
-    const renderProgram = ({ item }: { item: ProgramSummary }) => (
-        <View style={styles.card}>
+    const handleSetActive = async (program: ProgramSummary) => {
+        setMenuTarget(null);
+        const newActiveId = program.isActive ? null : program.id;
+        try {
+            await setActiveProgram(newActiveId);
+            setPrograms((prev) =>
+                prev.map((p) => ({ ...p, isActive: p.id === newActiveId }))
+            );
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const renderCard = (item: ProgramSummary) => (
+        <View key={item.id} style={styles.card}>
             <View style={styles.accentBarWrapper}>
                 <View style={styles.accentBar} />
             </View>
@@ -125,9 +140,7 @@ export default function LibraryScreen() {
             <View style={styles.header}>
                 <View style={styles.headerRow}>
                     <View>
-                        <Text style={styles.title}>
-                            Your <Text style={styles.titleAccent}>Library</Text>
-                        </Text>
+                        <Text style={styles.title}>Library</Text>
                         <Text style={styles.subtitle}>Manage your routines</Text>
                     </View>
                     <Pressable
@@ -135,8 +148,7 @@ export default function LibraryScreen() {
                         onPress={() => router.push('/library/create')}
                         hitSlop={6}
                     >
-                        <Ionicons name="add" size={20} color={Colors.textPrimary} />
-                        <Text style={styles.newButtonText}>New Routine</Text>
+                        <Ionicons name="add" size={24} color={Colors.textPrimary} />
                     </Pressable>
                 </View>
             </View>
@@ -150,14 +162,60 @@ export default function LibraryScreen() {
                     </Text>
                 </View>
             ) : (
-                <FlatList
-                    data={programs}
-                    keyExtractor={(item) => String(item.id)}
-                    renderItem={renderProgram}
-                    contentContainerStyle={styles.list}
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     onScrollBeginDrag={() => menuTarget && closeMenu()}
-                />
+                >
+                    {/* Active Routine — featured section */}
+                    {activeProgram && (
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.activeBadge}>
+                                    <View style={styles.activeDot} />
+                                    <Text style={styles.activeBadgeText}>ACTIVE ROUTINE</Text>
+                                </View>
+                            </View>
+                            <View style={styles.activeCard}>
+                                <View style={styles.activeCardInner}>
+                                    <View style={styles.activeCardTop}>
+                                        <Text style={styles.activeCardName} numberOfLines={1}>
+                                            {activeProgram.name}
+                                        </Text>
+                                        <Pressable
+                                            style={styles.menuButton}
+                                            hitSlop={8}
+                                            onPress={(e) => openMenu(activeProgram, e)}
+                                        >
+                                            <Ionicons
+                                                name="ellipsis-vertical"
+                                                size={20}
+                                                color={menuTarget?.id === activeProgram.id ? Colors.textPrimary : Colors.textTertiary}
+                                            />
+                                        </Pressable>
+                                    </View>
+                                    <View style={styles.activeMetaRow}>
+                                        <View style={styles.activeMetaItem}>
+                                            <Text style={styles.activeMetaValue}>{activeProgram.duration}</Text>
+                                            <Text style={styles.activeMetaLabel}>Weeks</Text>
+                                        </View>
+                                        <View style={styles.activeMetaDivider} />
+                                        <View style={styles.activeMetaItem}>
+                                            <Text style={styles.activeMetaValue}>{activeProgram.daysPerWeek}</Text>
+                                            <Text style={styles.activeMetaLabel}>Days/Week</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* All Routines */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>ALL ROUTINES</Text>
+                        {programs.map(renderCard)}
+                    </View>
+                </ScrollView>
             )}
 
             {menuTarget && (
@@ -179,6 +237,20 @@ export default function LibraryScreen() {
                             },
                         ]}
                     >
+                        <Pressable
+                            style={styles.dropdownItem}
+                            onPress={() => handleSetActive(menuTarget)}
+                        >
+                            <Ionicons
+                                name={menuTarget.isActive ? 'star' : 'star-outline'}
+                                size={18}
+                                color={menuTarget.isActive ? Colors.warning : Colors.textPrimary}
+                            />
+                            <Text style={styles.dropdownText}>
+                                {menuTarget.isActive ? 'Remove Active' : 'Set as Active'}
+                            </Text>
+                        </Pressable>
+                        <View style={styles.dropdownDivider} />
                         <Pressable
                             style={styles.dropdownItem}
                             onPress={() => handleEdit(menuTarget)}
@@ -224,45 +296,129 @@ const styles = StyleSheet.create({
     header: {
         paddingHorizontal: 20,
         paddingTop: 80,
-        paddingBottom: 36,
+        paddingBottom: 24,
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
     },
-    newButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 10,
-        backgroundColor: Colors.accent,
-        marginTop: 4,
-    },
-    newButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: Colors.textPrimary,
-    },
     title: {
-        fontSize: 28,
-        fontWeight: '700',
+        fontSize: 32,
+        fontWeight: '800',
         color: Colors.textPrimary,
-    },
-    titleAccent: {
-        color: Colors.accent,
+        letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: 15,
+        fontSize: 14,
         color: Colors.textSecondary,
         marginTop: 4,
     },
-    list: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
+    newButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        borderWidth: 1.5,
+        borderColor: Colors.accent,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
     },
+
+    // Scroll
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 32,
+    },
+
+    // Sections
+    section: {
+        marginBottom: 28,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    sectionTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+        letterSpacing: 2,
+        marginBottom: 14,
+    },
+
+    // Active badge
+    activeBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    activeDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: Colors.accent,
+    },
+    activeBadgeText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: Colors.accent,
+        letterSpacing: 2,
+    },
+
+    // Active card (featured)
+    activeCard: {
+        backgroundColor: Colors.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: Colors.accent,
+    },
+    activeCardInner: {
+        padding: 20,
+        gap: 20,
+    },
+    activeCardTop: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+    },
+    activeCardName: {
+        flex: 1,
+        fontSize: 22,
+        fontWeight: '800',
+        color: Colors.textPrimary,
+        letterSpacing: -0.3,
+        marginRight: 8,
+    },
+    activeMetaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    activeMetaItem: {
+        flex: 1,
+        alignItems: 'center',
+        gap: 4,
+    },
+    activeMetaValue: {
+        fontSize: 28,
+        fontWeight: '300',
+        color: Colors.textPrimary,
+        letterSpacing: -1,
+    },
+    activeMetaLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: Colors.textSecondary,
+        letterSpacing: 0.5,
+    },
+    activeMetaDivider: {
+        width: 1,
+        height: 32,
+        backgroundColor: Colors.border,
+    },
+
+    // Regular cards
     card: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -271,7 +427,7 @@ const styles = StyleSheet.create({
         paddingVertical: 24,
         paddingLeft: 20,
         paddingRight: 18,
-        marginBottom: 14,
+        marginBottom: 10,
         overflow: 'hidden',
     },
     accentBarWrapper: {
@@ -292,10 +448,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     cardName: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
         color: Colors.textPrimary,
-        marginBottom: 20,
+        marginBottom: 16,
     },
     metaRow: {
         flexDirection: 'row',
@@ -315,6 +471,8 @@ const styles = StyleSheet.create({
         padding: 8,
         alignSelf: 'flex-start',
     },
+
+    // Dropdown menu
     backdrop: {
         ...StyleSheet.absoluteFillObject,
         zIndex: 50,
@@ -327,7 +485,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1,
         borderColor: Colors.border,
-        minWidth: 150,
+        minWidth: 170,
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -351,6 +509,8 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.border,
         marginHorizontal: 10,
     },
+
+    // Empty state
     emptyState: {
         flex: 1,
         justifyContent: 'center',

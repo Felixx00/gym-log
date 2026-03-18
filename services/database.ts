@@ -7,7 +7,7 @@ import { EXPORT_SCHEMA_VERSION } from './exportTypes';
 let db: SQLite.SQLiteDatabase | null = null;
 
 const DB_NAME = 'gymlog.db';
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 // ────────────────────────── Init & Migrations ──────────────────────────
 
@@ -46,6 +46,10 @@ async function migrate(fromVersion: number): Promise<void> {
     if (fromVersion < 4) {
         await applyV4();
         await db.execAsync('PRAGMA user_version = 4;');
+    }
+    if (fromVersion < 5) {
+        await applyV5();
+        await db.execAsync('PRAGMA user_version = 5;');
     }
 }
 
@@ -155,6 +159,27 @@ async function applyV4(): Promise<void> {
             [exercise.name, exercise.muscle_group]
         );
     }
+}
+
+async function applyV5(): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+    await db.execAsync(
+        `ALTER TABLE programs ADD COLUMN is_active INTEGER NOT NULL DEFAULT 0;`
+    );
+}
+
+// ────────────────────────── Active Program ──────────────────────────
+
+export async function setActiveProgram(programId: number | null): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+    await db.withTransactionAsync(async () => {
+        // Clear any existing active program
+        await db!.runAsync('UPDATE programs SET is_active = 0 WHERE is_active = 1');
+        // Set the new active program (if not clearing)
+        if (programId != null) {
+            await db!.runAsync('UPDATE programs SET is_active = 1 WHERE id = ?', [programId]);
+        }
+    });
 }
 
 // ────────────────────────── Exercise Library ──────────────────────────
@@ -280,13 +305,15 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
         week_count: number;
         days_per_week: number;
         created_at: string;
+        is_active: number;
     }>(`
         SELECT
             p.id,
             p.name,
             COUNT(DISTINCT w.id) AS week_count,
             COALESCE(MAX(day_counts.day_count), 0) AS days_per_week,
-            p.created_at
+            p.created_at,
+            p.is_active
         FROM programs p
         LEFT JOIN weeks w ON w.program_id = p.id
         LEFT JOIN (
@@ -304,6 +331,7 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
         duration: row.week_count,
         daysPerWeek: row.days_per_week,
         createdAt: row.created_at,
+        isActive: row.is_active === 1,
     }));
 }
 

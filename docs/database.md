@@ -22,17 +22,18 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 | `programNameExists(name, excludeId?)` | Checks for duplicate program names |
 | `exportAllPrograms()` | Returns `ExportFile` with all programs serialized (strips IDs/UI state). Uses `loadProgram()` per program |
 | `importPrograms(data)` | Imports programs from `ExportFile`. Skips duplicate names. Returns `{ imported: string[], skipped: string[] }` |
+| `setActiveProgram(programId \| null)` | Sets a program as the active routine (only one at a time). Pass `null` to clear |
 | `searchExerciseLibrary(query)` | Returns up to 10 exercise names matching prefix. Custom exercises sorted first, then alphabetical. Returns `string[]` |
 
 ### Design Decisions
 
 - **Delete + re-insert children on save** rather than diffing. Simpler and correct for nested trees with reorder/add/remove.
 - **4 separate SELECTs on load** (weeks, days, exercises, sets) to avoid Cartesian joins. Assembles tree bottom-up with Maps.
-- **Migrations** via `PRAGMA user_version`. Current version: 4. PRAGMA is set outside transactions (it's not transactional in SQLite).
+- **Migrations** via `PRAGMA user_version`. Current version: 5. PRAGMA is set outside transactions (it's not transactional in SQLite).
 - **IDs**: DB uses `INTEGER PRIMARY KEY AUTOINCREMENT`. In-memory types use `string` IDs. Service layer converts with `String(id)`.
 - **Exercise library auto-population**: `saveProgram()` calls `insertExerciseNames()` after the main transaction. Uses `INSERT OR IGNORE` so duplicates are silently skipped. This is wrapped in a try/catch — library update failure never blocks program save.
 
-## Schema (v4)
+## Schema (v5)
 
 ```sql
 programs
@@ -41,6 +42,7 @@ programs
   duration      INTEGER NOT NULL          -- total weeks
   days_per_week INTEGER NOT NULL
   created_at    TEXT DEFAULT datetime('now')
+  is_active     INTEGER DEFAULT 0         -- boolean 0/1, only one program active at a time
 
 weeks
   id            INTEGER PRIMARY KEY AUTOINCREMENT
@@ -93,5 +95,6 @@ All foreign keys on program tables use `ON DELETE CASCADE`. `position` columns e
 - **v2**: Added `exercises.notes` column
 - **v3**: Created `exercise_library` table, seeded ~180 built-in exercises from `data/exerciseSeed.json`, backfilled existing exercise names from programs as `is_custom=1`
 - **v4**: Re-seeded exercise library with expanded seed data (added ~80 new exercises)
+- **v5**: Added `programs.is_active` column for active routine feature
 
 Note: `programs.duration` and `programs.days_per_week` are metadata columns written on save, but `loadProgramList()` derives these values from actual child rows to avoid sync issues.
