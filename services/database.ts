@@ -182,6 +182,149 @@ export async function setActiveProgram(programId: number | null): Promise<void> 
     });
 }
 
+// ────────────────────────── Dashboard Stats ──────────────────────────
+
+// 'completed' = workout done, 'missed' = past day with no workout, 'today' = current day, 'future' = upcoming
+export type WeekDayStatus = 'completed' | 'missed' | 'today' | 'future';
+
+export type DashboardStats = {
+    programId: number;
+    programName: string;
+    totalDays: number;
+    completedDays: number;
+    currentWeek: number;
+    totalWeeks: number;
+    nextDay: { id: number; name: string; dayNumber: number; exerciseCount: number } | null;
+    lastWorkout: { name: string; completedAt: string } | null;
+    workoutsThisWeek: number;
+    weeklyActivity: WeekDayStatus[]; // Mon=0 through Sun=6
+};
+
+export async function loadDashboardStats(): Promise<DashboardStats | null> {
+    if (!db) throw new Error('Database not initialized');
+
+    // Find active program
+    const program = await db.getFirstAsync<{ id: number; name: string }>(
+        'SELECT id, name FROM programs WHERE is_active = 1'
+    );
+    if (!program) return null;
+
+    // Total weeks
+    const weekRow = await db.getFirstAsync<{ cnt: number }>(
+        'SELECT COUNT(*) as cnt FROM weeks WHERE program_id = ?',
+        [program.id]
+    );
+    const totalWeeks = weekRow?.cnt ?? 0;
+
+    // All days with week info, ordered by week then day position
+    const days = await db.getAllAsync<{
+        day_id: number;
+        custom_name: string;
+        default_name: string;
+        completed: number;
+        completed_at: string | null;
+        week_position: number;
+        day_position: number;
+        exercise_count: number;
+    }>(`
+        SELECT
+            d.id AS day_id,
+            d.custom_name,
+            d.default_name,
+            d.completed,
+            d.completed_at,
+            w.position AS week_position,
+            d.position AS day_position,
+            (SELECT COUNT(*) FROM exercises e WHERE e.day_id = d.id) AS exercise_count
+        FROM days d
+        JOIN weeks w ON d.week_id = w.id
+        WHERE w.program_id = ?
+        ORDER BY w.position, d.position
+    `, [program.id]);
+
+    const totalDays = days.length;
+    const completedDays = days.filter((d) => d.completed === 1).length;
+
+    // First incomplete day = next workout
+    const nextIncomplete = days.find((d) => d.completed === 0);
+    const currentWeek = nextIncomplete ? nextIncomplete.week_position + 1 : totalWeeks;
+
+    let nextDay: DashboardStats['nextDay'] = null;
+    if (nextIncomplete) {
+        // Count completed days before this one in the same week to get day number
+        const daysInWeekBefore = days.filter(
+            (d) => d.week_position === nextIncomplete.week_position && d.day_position < nextIncomplete.day_position
+        ).length;
+        nextDay = {
+            id: nextIncomplete.day_id,
+            name: nextIncomplete.custom_name || nextIncomplete.default_name,
+            dayNumber: daysInWeekBefore + 1,
+            exerciseCount: nextIncomplete.exercise_count,
+        };
+    }
+
+    // Last completed day (most recent by completed_at)
+    const completedDaysList = days
+        .filter((d) => d.completed === 1 && d.completed_at)
+        .sort((a, b) => (b.completed_at! > a.completed_at! ? 1 : -1));
+
+    let lastWorkout: DashboardStats['lastWorkout'] = null;
+    if (completedDaysList.length > 0) {
+        const last = completedDaysList[0];
+        lastWorkout = {
+            name: last.custom_name || last.default_name,
+            completedAt: last.completed_at!,
+        };
+    }
+
+    // Workouts completed this week (last 7 days)
+    const now = new Date();
+    const weekAgo = new Date(now);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString();
+    const workoutsThisWeek = completedDaysList.filter(
+        (d) => d.completed_at! >= weekAgoStr
+    ).length;
+
+    // Weekly activity (Mon=0 .. Sun=6) for the current calendar week
+    const todayDow = now.getDay(); // 0=Sun, 1=Mon...
+    const mondayOffset = todayDow === 0 ? -6 : 1 - todayDow;
+    const monday = new Date(now);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() + mondayOffset);
+
+    // Build a set of day-of-week indices (0=Mon..6=Sun) that had workouts
+    const workoutDowSet = new Set<number>();
+    for (const d of completedDaysList) {
+        const dt = new Date(d.completed_at!);
+        if (dt >= monday) {
+            const dow = dt.getDay(); // 0=Sun
+            const idx = dow === 0 ? 6 : dow - 1; // convert to Mon=0..Sun=6
+            workoutDowSet.add(idx);
+        }
+    }
+
+    const todayIdx = todayDow === 0 ? 6 : todayDow - 1; // Mon=0..Sun=6
+    const weeklyActivity: WeekDayStatus[] = Array.from({ length: 7 }, (_, i) => {
+        if (i === todayIdx) return 'today';
+        if (i > todayIdx) return 'future';
+        return workoutDowSet.has(i) ? 'completed' : 'missed';
+    });
+
+    return {
+        programId: program.id,
+        programName: program.name,
+        totalDays,
+        completedDays,
+        currentWeek,
+        totalWeeks,
+        nextDay,
+        lastWorkout,
+        workoutsThisWeek,
+        weeklyActivity,
+    };
+}
+
 // ────────────────────────── Exercise Library ──────────────────────────
 
 export async function searchExerciseLibrary(query: string): Promise<string[]> {

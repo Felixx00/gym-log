@@ -23,6 +23,7 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 | `exportAllPrograms()` | Returns `ExportFile` with all programs serialized (strips IDs/UI state). Uses `loadProgram()` per program |
 | `importPrograms(data)` | Imports programs from `ExportFile`. Skips duplicate names. Returns `{ imported: string[], skipped: string[] }` |
 | `setActiveProgram(programId \| null)` | Sets a program as the active routine (only one at a time). Pass `null` to clear |
+| `loadDashboardStats()` | Returns `DashboardStats` for the active program: progress, next workout, last workout, weekly activity (Mon–Sun completion status). Returns `null` if no active program |
 | `searchExerciseLibrary(query)` | Returns up to 10 exercise names matching prefix. Custom exercises sorted first, then alphabetical. Returns `string[]` |
 
 ### Design Decisions
