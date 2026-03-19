@@ -2,7 +2,8 @@ import Slider from '@react-native-community/slider'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Text, TextInput } from '@/components/StyledText'
 
 import { Colors } from '@/constants/theme'
 

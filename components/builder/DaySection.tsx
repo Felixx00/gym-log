@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '@/components/StyledText';
 
 import { Colors } from '@/constants/theme';
 import { ExerciseCard } from './ExerciseCard';

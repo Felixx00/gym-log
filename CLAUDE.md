@@ -24,6 +24,7 @@ npm run lint         # Linting
 - **Navigation**: Expo Router (file-based routing)
 - **Database**: SQLite via `expo-sqlite` (local persistence)
 - **UI**: React Navigation, Expo Vector Icons (Ionicons), Reanimated & Gesture Handler
+- **Typography**: Space Grotesk (`@expo-google-fonts/space-grotesk`) — loaded via `useFonts` in root layout
 - **File I/O**: `expo-file-system` (new class-based API: `File`, `Paths`) + `expo-sharing`
 - **Theming**: Single dark theme — `constants/theme.ts`
 
@@ -31,7 +32,7 @@ npm run lint         # Linting
 
 ```
 app/
-├── _layout.tsx                  # Root layout (theme + DB init)
+├── _layout.tsx                  # Root layout (theme + DB init + font loading)
 ├── (tabs)/
 │   ├── _layout.tsx              # Tab bar (Dashboard, Library, Settings)
 │   ├── (dashboard)/
@@ -58,6 +59,7 @@ services/
 data/
 └── exerciseSeed.json            # ~180 built-in exercises for exercise library
 components/
+├── StyledText.tsx               # Custom Text/TextInput with Space Grotesk font mapping
 ├── OverlayModal.tsx             # Reusable animated modal overlay (replaces RN Modal)
 ├── ExerciseHistorySheet.tsx     # Draggable bottom sheet for exercise history
 └── builder/
@@ -67,7 +69,7 @@ components/
     ├── ExerciseAutocomplete.tsx # Autocomplete input for exercise names
     └── index.ts                 # Barrel exports
 constants/
-└── theme.ts                     # Color palette
+└── theme.ts                     # Color palette + font family names
 docs/
 ├── database.md                  # Schema, migrations, service API
 └── types.md                     # Data type definitions and hierarchy
@@ -80,7 +82,7 @@ docs/
 - **Program View**: `(dashboard)/program.tsx` shows program timeline with week pills, progress bar, and day list. Days have three states: completed (checkmark + date), current session (highlighted card with "Start Workout"), and future (numbered). Users can tap any incomplete day to select it as the current session. Completed days are tappable to re-edit logged data.
 - **Day Workout**: `(dashboard)/day.tsx` — "Start Workout" or tapping a completed day navigates here. Shows exercise cards with set rows (RIR/technique info, reps input, weight input, RIR achieved toggle). Two action buttons per exercise: copy weight (copies Set 1's weight to all sets) and history (draggable bottom sheet via `ExerciseHistorySheet` showing per-week logged data, matched by exercise name + day name within the same program, completed days only). Save persists logged data + marks day completed → navigates back. Uses `OverlayModal` for save confirmation. When editing a completed day, header shows "EDITING" and `completed_at` is preserved (not overwritten).
 - **Settings**: `settings/index.tsx` — two actions: Export All Programs (serializes all programs to JSON, opens native share sheet via `expo-sharing`) and Import Programs (picks JSON file via `expo-file-system` `File.pickFileAsync()`, validates structure, saves to DB). On import, programs with duplicate names are skipped and the user is notified in a summary modal.
-- **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup, gates rendering until ready
+- **DB Init**: `app/_layout.tsx` calls `initDatabase()` on startup and loads fonts via `useFonts`, gates rendering until both are ready
 
 ### Path Aliasing
 
@@ -90,11 +92,14 @@ docs/
 
 Single dark theme. All colors in `constants/theme.ts` — never hardcode colors.
 
+**Font**: Space Grotesk (geometric sans-serif). All `Text` and `TextInput` components must be imported from `@/components/StyledText` (not `react-native`). `StyledText` wraps RN's `Text`/`TextInput` and auto-maps `fontWeight` → correct Space Grotesk font file (300→Light, 400→Regular, 500→Medium, 600→SemiBold, 700+→Bold), stripping `fontWeight` from the style to avoid Android font resolution failures. Font family names are exported from `constants/theme.ts` via `Fonts`.
+
 **Key colors**: Background `#0F0F0F` · Surface `#1A1A1A` · Elevated `#242424` · Accent `#FF3E3E` · Text `#FAFAFA` / `#9E9E9E` / `#666666` · Border `#2A2A2A`
 
 **Conventions**:
 - `StyleSheet.create()` at bottom of files
 - `Colors.accent` for primary actions, `Colors.primary` for secondary
+- `Text` and `TextInput` from `@/components/StyledText`, never from `react-native`
 - Inputs: `surfaceElevated` bg, no border, `borderRadius: 12`, `placeholderTextColor={Colors.textTertiary}`
 - Functional components with hooks, types at top of file
 - **Modals**: Use `OverlayModal` component (not RN `Modal`) to avoid Android navigation bar flash with `edgeToEdgeEnabled`. Supports fade animation, frozen content during close, single/multi-button layouts.

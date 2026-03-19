@@ -2,8 +2,6 @@
  * GymLog Color Palette - Dark, minimalist, elegant theme
  */
 
-import { Platform } from 'react-native';
-
 export const Colors = {
   // Backgrounds
   background: '#0F0F0F',      // Main background - deep dark
@@ -40,27 +38,10 @@ export const Colors = {
   tabIconSelected: '#FF3E3E', // Red accent for selected tab
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const Fonts = {
+  light: 'SpaceGrotesk_300Light',
+  regular: 'SpaceGrotesk_400Regular',
+  medium: 'SpaceGrotesk_500Medium',
+  semiBold: 'SpaceGrotesk_600SemiBold',
+  bold: 'SpaceGrotesk_700Bold',
+};

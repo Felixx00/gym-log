@@ -1,4 +1,12 @@
 import { ThemeProvider } from '@react-navigation/native';
+import {
+  SpaceGrotesk_300Light,
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -27,19 +35,19 @@ const GymLogTheme = {
   },
   fonts: {
     regular: {
-      fontFamily: 'System',
+      fontFamily: 'SpaceGrotesk_400Regular',
       fontWeight: '400' as const,
     },
     medium: {
-      fontFamily: 'System',
+      fontFamily: 'SpaceGrotesk_500Medium',
       fontWeight: '500' as const,
     },
     bold: {
-      fontFamily: 'System',
+      fontFamily: 'SpaceGrotesk_700Bold',
       fontWeight: '700' as const,
     },
     heavy: {
-      fontFamily: 'System',
+      fontFamily: 'SpaceGrotesk_700Bold',
       fontWeight: '900' as const,
     },
   },
@@ -47,15 +55,27 @@ const GymLogTheme = {
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
+  const [fontsLoaded] = useFonts({
+    SpaceGrotesk_300Light,
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
 
   useEffect(() => {
     initDatabase()
       .then(() => setDbReady(true))
-      .catch(console.error)
-      .finally(() => SplashScreen.hideAsync());
+      .catch(console.error);
   }, []);
 
-  if (!dbReady) return null;
+  useEffect(() => {
+    if (dbReady && fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [dbReady, fontsLoaded]);
+
+  if (!dbReady || !fontsLoaded) return null;
 
   return (
     <ThemeProvider value={GymLogTheme}>

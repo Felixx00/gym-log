@@ -3,10 +3,9 @@ import {
     Keyboard,
     Pressable,
     StyleSheet,
-    Text,
-    TextInput,
     View,
 } from 'react-native';
+import { Text, TextInput } from '@/components/StyledText';
 import type { StyleProp, TextStyle } from 'react-native';
 
 import { Colors } from '@/constants/theme';

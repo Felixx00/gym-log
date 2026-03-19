@@ -3,9 +3,9 @@ import {
     Animated,
     Pressable,
     StyleSheet,
-    Text,
     View,
 } from 'react-native';
+import { Text } from '@/components/StyledText';
 
 import { Colors } from '@/constants/theme';
 

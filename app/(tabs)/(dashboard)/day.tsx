@@ -8,10 +8,9 @@ import {
     InteractionManager,
     Pressable,
     StyleSheet,
-    Text,
-    TextInput,
     View,
 } from 'react-native';
+import { Text, TextInput } from '@/components/StyledText';
 
 import type { Exercise, Set } from '@/components/builder';
 import { ExerciseHistorySheet } from '@/components/ExerciseHistorySheet';

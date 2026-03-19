@@ -7,9 +7,9 @@ import {
     Pressable,
     ScrollView,
     StyleSheet,
-    Text,
     View,
 } from 'react-native';
+import { Text } from '@/components/StyledText';
 
 import { DaySection, Exercise, Set, Week } from '@/components/builder';
 import { OverlayModal } from '@/components/OverlayModal';
