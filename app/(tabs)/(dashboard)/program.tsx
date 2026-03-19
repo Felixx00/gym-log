@@ -103,22 +103,18 @@ export default function ProgramScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <View style={styles.headerTop}>
+                <View style={styles.headerRow}>
                     <Pressable style={styles.backButton} onPress={() => router.back()}>
                         <Ionicons name="chevron-back" size={24} color={Colors.textSecondary} />
                     </Pressable>
-                    <Text style={styles.headerLabel}>PROGRAMS</Text>
+                    <View style={styles.headerInfo}>
+                        <Text style={styles.programName} numberOfLines={1}>{programName}</Text>
+                        <Text style={styles.progressText}>{progress}%</Text>
+                    </View>
                 </View>
-                <Text style={styles.programName}>{programName}</Text>
-            </View>
-
-            {/* Progress */}
-            <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
-            </View>
-            <View style={styles.progressSection}>
-                <Text style={styles.progressLabel}>PROGRESS</Text>
-                <Text style={styles.progressValue}>{progress}% COMPLETE</Text>
+                <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+                </View>
             </View>
 
             {/* Week Pills */}
@@ -152,20 +148,18 @@ export default function ProgramScreen() {
                 })}
             </ScrollView>
 
-            {/* Days Timeline */}
+            {/* Day Cards */}
             <ScrollView
                 style={styles.daysScroll}
                 contentContainerStyle={styles.daysContent}
                 showsVerticalScrollIndicator={false}
             >
                 {currentWeek.days.map((day, index) => {
-                    // A day is "current" if manually selected, or if it's the auto-detected first incomplete
                     const autoCurrentId = firstIncomplete?.weekIndex === activeWeek
                         ? firstIncomplete.dayId : null;
                     const activeDayId = selectedDayId ?? autoCurrentId;
                     const isCurrent = !day.completed && day.id === activeDayId;
                     const status = getDayStatus(day, isCurrent);
-                    const isLast = index === currentWeek.days.length - 1;
                     const dayNumber = index + 1;
                     const displayName = day.customName || day.defaultName;
 
@@ -182,92 +176,67 @@ export default function ProgramScreen() {
                             });
                             return;
                         }
-                        // Tap to select; tap again to deselect (back to auto)
                         setSelectedDayId((prev) => prev === day.id ? null : day.id);
                     };
 
                     return (
-                        <View key={day.id} style={styles.timelineRow}>
-                            {/* Timeline indicator */}
-                            <View style={styles.timelineLeft}>
-                                {status === 'completed' ? (
-                                    <View style={styles.indicatorCompleted}>
-                                        <Ionicons name="checkmark" size={16} color={Colors.textPrimary} />
-                                    </View>
-                                ) : status === 'current' ? (
-                                    <View style={styles.indicatorCurrent}>
-                                        <View style={styles.indicatorCurrentDot} />
-                                    </View>
-                                ) : (
-                                    <View style={styles.indicatorFuture}>
-                                        <Text style={styles.indicatorFutureText}>{dayNumber}</Text>
+                        <Pressable
+                            key={day.id}
+                            style={[
+                                styles.dayCard,
+                                status === 'current' && styles.dayCardCurrent,
+                                status === 'completed' && styles.dayCardCompleted,
+                            ]}
+                            onPress={handleDayPress}
+                        >
+                            <View style={styles.dayCardTop}>
+                                <View style={styles.dayCardInfo}>
+                                    <Text style={styles.dayLabel}>DAY {dayNumber}</Text>
+                                    <Text style={styles.dayName}>{displayName}</Text>
+                                </View>
+                                {status === 'completed' && (
+                                    <View style={styles.statusBadgeCompleted}>
+                                        <Ionicons name="checkmark" size={14} color={Colors.textPrimary} />
                                     </View>
                                 )}
-                                {!isLast && <View style={styles.timelineLine} />}
+                                {status === 'future' && (
+                                    <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+                                )}
                             </View>
 
-                            {/* Day content */}
-                            {status === 'current' ? (
-                                <Pressable style={styles.currentCard} onPress={handleDayPress}>
-                                    <Text style={styles.currentLabel}>CURRENT SESSION</Text>
-                                    <Text style={styles.currentDayName}>
-                                        Day {dayNumber}: {displayName}
-                                    </Text>
-                                    <View style={styles.metaRow}>
-                                        <Ionicons name="barbell-outline" size={14} color={Colors.textSecondary} />
-                                        <Text style={styles.metaText}>
-                                            {day.exercises.length} {day.exercises.length === 1 ? 'Exercise' : 'Exercises'}
-                                        </Text>
-                                    </View>
-                                    <Pressable
-                                        style={styles.startButton}
-                                        onPress={() => {
-                                            router.push({
-                                                pathname: '/day',
-                                                params: {
-                                                    dayId: day.id,
-                                                    dayNumber: String(dayNumber),
-                                                    dayName: displayName,
-                                                },
-                                            });
-                                        }}
-                                    >
-                                        <Text style={styles.startButtonText}>Start Workout</Text>
-                                        <Ionicons name="chevron-forward" size={18} color={Colors.textPrimary} />
-                                    </Pressable>
-                                </Pressable>
-                            ) : (
+                            <View style={styles.metaRow}>
+                                <Ionicons
+                                    name={status === 'completed' ? 'checkmark-circle-outline' : 'barbell-outline'}
+                                    size={14}
+                                    color={Colors.textSecondary}
+                                />
+                                <Text style={styles.metaText}>
+                                    {status === 'completed' && day.completedAt
+                                        ? `Completed ${formatCompletedDate(day.completedAt)}`
+                                        : `${day.exercises.length} ${day.exercises.length === 1 ? 'Exercise' : 'Exercises'}`
+                                    }
+                                </Text>
+                            </View>
+
+                            {status === 'current' && (
                                 <Pressable
-                                    style={styles.dayCard}
-                                    onPress={handleDayPress}
+                                    style={styles.startButton}
+                                    onPress={() => {
+                                        router.push({
+                                            pathname: '/day',
+                                            params: {
+                                                dayId: day.id,
+                                                dayNumber: String(dayNumber),
+                                                dayName: displayName,
+                                            },
+                                        });
+                                    }}
                                 >
-                                    <Text style={styles.dayLabel}>DAY {dayNumber}</Text>
-                                    <Text style={[
-                                        styles.dayName,
-                                        status === 'future' && styles.dayNameFuture,
-                                    ]}>
-                                        {displayName}
-                                    </Text>
-                                    <View style={styles.metaRow}>
-                                        {status === 'completed' && day.completedAt ? (
-                                            <>
-                                                <Ionicons name="checkmark-circle-outline" size={14} color={Colors.textSecondary} />
-                                                <Text style={styles.metaText}>
-                                                    Completed {formatCompletedDate(day.completedAt)}
-                                                </Text>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Ionicons name="barbell-outline" size={14} color={Colors.textSecondary} />
-                                                <Text style={styles.metaText}>
-                                                    {day.exercises.length} {day.exercises.length === 1 ? 'Exercise' : 'Exercises'}
-                                                </Text>
-                                            </>
-                                        )}
-                                    </View>
+                                    <Text style={styles.startButtonText}>Start Workout</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={Colors.textPrimary} />
                                 </Pressable>
                             )}
-                        </View>
+                        </Pressable>
                     );
                 })}
             </ScrollView>
@@ -289,52 +258,36 @@ const styles = StyleSheet.create({
     header: {
         paddingHorizontal: 20,
         paddingTop: 60,
-        paddingBottom: 10,
+        paddingBottom: 16,
     },
-    headerTop: {
+    headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 12,
     },
     backButton: {
         marginRight: 10,
     },
-    headerLabel: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: Colors.accent,
-        letterSpacing: 1.5,
+    headerInfo: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        gap: 10,
     },
     programName: {
-        fontSize: 28,
+        fontSize: 22,
         fontWeight: '700',
         color: Colors.textPrimary,
+        flex: 1,
     },
-    // Progress
-    progressSection: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        marginTop: 6,
-        marginBottom: 20,
-    },
-    progressLabel: {
-        fontSize: 11,
+    progressText: {
+        fontSize: 14,
         fontWeight: '700',
-        color: Colors.textSecondary,
-        letterSpacing: 1,
-    },
-    progressValue: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: Colors.textSecondary,
-        letterSpacing: 1,
+        color: Colors.accent,
     },
     progressBarContainer: {
         height: 3,
         backgroundColor: Colors.border,
-        marginHorizontal: 20,
         borderRadius: 2,
     },
     progressBarFill: {
@@ -346,7 +299,7 @@ const styles = StyleSheet.create({
     // Week Pills
     weekPillsWrapper: {
         flexGrow: 0,
-        marginBottom: 20,
+        marginBottom: 16,
     },
     weekPillsContainer: {
         gap: 8,
@@ -375,110 +328,37 @@ const styles = StyleSheet.create({
         color: Colors.textPrimary,
     },
 
-    // Timeline
+    // Day Cards
     daysScroll: {
         flex: 1,
     },
     daysContent: {
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         paddingBottom: 40,
+        gap: 10,
     },
-    timelineRow: {
-        flexDirection: 'row',
-    },
-    timelineLeft: {
-        width: 40,
-        alignItems: 'center',
-    },
-    timelineLine: {
-        flex: 1,
-        width: 2,
-        backgroundColor: Colors.border,
-    },
-
-    // Indicators
-    indicatorCompleted: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: Colors.accent,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    indicatorCurrent: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        borderWidth: 2,
-        borderColor: Colors.accent,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    indicatorCurrentDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: Colors.accent,
-    },
-    indicatorFuture: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        borderWidth: 1.5,
-        borderColor: Colors.textTertiary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    indicatorFutureText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: Colors.textTertiary,
-    },
-
-    // Current session card
-    currentCard: {
-        flex: 1,
-        backgroundColor: Colors.surfaceElevated,
-        borderRadius: 14,
-        padding: 18,
-        marginLeft: 12,
-        marginBottom: 16,
-    },
-    currentLabel: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: Colors.accent,
-        letterSpacing: 1,
-        marginBottom: 6,
-    },
-    currentDayName: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: Colors.textPrimary,
-        marginBottom: 6,
-    },
-    startButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        backgroundColor: Colors.accent,
-        borderRadius: 10,
-        paddingVertical: 12,
-        marginTop: 14,
-    },
-    startButtonText: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: Colors.textPrimary,
-    },
-
-    // Regular day card
     dayCard: {
+        backgroundColor: Colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    dayCardCurrent: {
+        borderColor: Colors.accent,
+        borderWidth: 1.5,
+    },
+    dayCardCompleted: {
+        opacity: 0.7,
+    },
+    dayCardTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    dayCardInfo: {
         flex: 1,
-        marginLeft: 12,
-        paddingVertical: 4,
-        marginBottom: 16,
     },
     dayLabel: {
         fontSize: 11,
@@ -491,10 +371,31 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: '700',
         color: Colors.textPrimary,
-        marginBottom: 4,
     },
-    dayNameFuture: {
-        color: Colors.accent,
+    statusBadgeCompleted: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: Colors.accent,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    // Start button (current session only)
+    startButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: Colors.accent,
+        borderRadius: 10,
+        paddingVertical: 12,
+        marginTop: 12,
+    },
+    startButtonText: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: Colors.textPrimary,
     },
 
     // Shared meta
