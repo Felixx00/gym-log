@@ -35,6 +35,8 @@ export default function DayScreen() {
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [historyExercise, setHistoryExercise] = useState<{ id: string; name: string } | null>(null);
     const [toastMsg, setToastMsg] = useState('');
+    const [techniqueTooltip, setTechniqueTooltip] = useState<string | null>(null);
+    const tooltipAnim = useRef(new Animated.Value(0)).current;
     const toastAnim = useRef(new Animated.Value(0)).current;
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scrollY = useRef(new Animated.Value(0)).current;
@@ -160,6 +162,7 @@ export default function DayScreen() {
                     { useNativeDriver: true }
                 )}
                 scrollEventThrottle={16}
+                onScrollBeginDrag={() => techniqueTooltip && setTechniqueTooltip(null)}
                 onContentSizeChange={(_, h) => setContentHeight(h)}
                 onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
             >
@@ -220,7 +223,7 @@ export default function DayScreen() {
                         {/* Column Labels */}
                         <View style={styles.colLabelsRow}>
                             <View style={styles.setNumCol} />
-                            <View style={styles.rirTechCol} />
+                            <Text style={[styles.colLabel, styles.rirTechCol]}>RIR/TECH</Text>
                             <Text style={[styles.colLabel, styles.inputCol]}>REPS</Text>
                             <Text style={[styles.colLabel, styles.weightCol]}>Weight</Text>
                             <View style={styles.checkCol} />
@@ -228,15 +231,41 @@ export default function DayScreen() {
 
                         {/* Set Rows */}
                         {exercise.sets.map((set, index) => (
-                            <View key={set.id} style={styles.setRow}>
+                            <View key={set.id} style={styles.setRowWrapper}>
+                                {techniqueTooltip === set.id && (
+                                    <Animated.View style={[styles.techTooltip, { opacity: tooltipAnim }]}>
+                                        <Text style={styles.techTooltipText}>{set.technique}</Text>
+                                        <View style={styles.techTooltipArrow} />
+                                    </Animated.View>
+                                )}
+                                <View style={styles.setRow}>
                                 <Text style={[styles.setNumber, styles.setNumCol]}>
                                     #{index + 1}
                                 </Text>
                                 <View style={styles.rirTechCol}>
-                                    <Text style={styles.rirTechLabel}>RIR/TECH</Text>
-                                    <Text style={styles.rirTechText} numberOfLines={1}>
-                                        {set.rir != null ? set.rir : '-'}{'\u2022'}{set.technique || 'Default'}
-                                    </Text>
+                                    <View style={styles.rirTechValue}>
+                                        <Text style={styles.rirTechText}>
+                                            {set.rir != null ? set.rir : '-'}
+                                        </Text>
+                                        {set.technique ? (
+                                            <Pressable
+                                                onPress={() => {
+                                                    if (techniqueTooltip === set.id) {
+                                                        Animated.timing(tooltipAnim, { toValue: 0, duration: 120, useNativeDriver: true }).start(
+                                                            () => setTechniqueTooltip(null)
+                                                        );
+                                                    } else {
+                                                        setTechniqueTooltip(set.id);
+                                                        tooltipAnim.setValue(0);
+                                                        Animated.timing(tooltipAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+                                                    }
+                                                }}
+                                                hitSlop={6}
+                                            >
+                                                <Ionicons name="flash" size={12} color={Colors.accent} />
+                                            </Pressable>
+                                        ) : null}
+                                    </View>
                                 </View>
                                 <TextInput
                                     style={[styles.setInput, styles.inputCol]}
@@ -287,6 +316,7 @@ export default function DayScreen() {
                                         )}
                                     </View>
                                 </Pressable>
+                            </View>
                             </View>
                         ))}
 
@@ -490,6 +520,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingLeft: 4,
         paddingRight: 6,
+        alignItems: 'center',
     },
     inputCol: {
         width: 68,
@@ -520,6 +551,9 @@ const styles = StyleSheet.create({
     },
 
     // Set Row
+    setRowWrapper: {
+        position: 'relative',
+    },
     setRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -531,16 +565,48 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: Colors.textTertiary,
     },
-    rirTechLabel: {
-        fontSize: 9,
-        fontWeight: '600',
-        color: Colors.textTertiary,
-        letterSpacing: 0.5,
-        marginBottom: 2,
+    rirTechValue: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+        backgroundColor: Colors.surfaceElevated,
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 8,
     },
     rirTechText: {
         fontSize: 12,
         color: Colors.textSecondary,
+    },
+    techTooltip: {
+        position: 'absolute',
+        top: -28,
+        left: 26,
+        backgroundColor: Colors.surfaceElevated,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        zIndex: 100,
+    },
+    techTooltipText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: Colors.textPrimary,
+    },
+    techTooltipArrow: {
+        position: 'absolute',
+        bottom: -5,
+        left: 12,
+        width: 10,
+        height: 10,
+        backgroundColor: Colors.surfaceElevated,
+        borderRightWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: Colors.border,
+        transform: [{ rotate: '45deg' }],
     },
     setInput: {
         backgroundColor: Colors.surfaceElevated,
