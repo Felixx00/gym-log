@@ -176,7 +176,7 @@ export default function DayScreen() {
                                     <View style={styles.overviewDot} />
                                     <Text style={styles.overviewName} numberOfLines={1}>{ex.name}</Text>
                                     <Text style={styles.overviewDetail}>
-                                        {ex.sets.length}×{ex.repRange}
+                                        {ex.sets.length} × {ex.repRange}
                                     </Text>
                                 </View>
                             ))}
@@ -190,8 +190,12 @@ export default function DayScreen() {
                     </>
                 )}
 
-                {exercises.map((exercise) => (
+                {exercises.map((exercise, i) => (
                     <View key={exercise.id} style={styles.exerciseCard}>
+                        {/* Number Badge */}
+                        <View style={styles.exerciseNumberBadge}>
+                            <Text style={styles.exerciseNumberText}>{i + 1}</Text>
+                        </View>
                         {/* Exercise Header */}
                         <View style={styles.exerciseHeader}>
                             <View style={styles.exerciseNameCol}>
@@ -232,14 +236,14 @@ export default function DayScreen() {
                                     }}
                                     hitSlop={6}
                                 >
-                                    <Ionicons name="copy-outline" size={18} color={Colors.textSecondary} />
+                                    <Ionicons name="copy-outline" size={16} color={Colors.textSecondary} />
                                 </Pressable>
                                 <Pressable
                                     style={styles.actionButton}
                                     onPress={() => setHistoryExercise({ id: exercise.id, name: exercise.name })}
                                     hitSlop={6}
                                 >
-                                    <Ionicons name="time-outline" size={20} color={Colors.textSecondary} />
+                                    <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
                                 </Pressable>
                             </View>
                         </View>
@@ -471,10 +475,14 @@ const styles = StyleSheet.create({
 
     // Workout Overview
     overviewContainer: {
-        paddingHorizontal: 4,
+        backgroundColor: Colors.surface,
+        borderRadius: 16,
+        borderLeftWidth: 3,
+        borderLeftColor: Colors.accent,
+        padding: 14,
     },
     overviewList: {
-        gap: 8,
+        gap: 10,
     },
     overviewRow: {
         flexDirection: 'row',
@@ -489,15 +497,20 @@ const styles = StyleSheet.create({
     },
     overviewName: {
         fontSize: 13,
-        fontWeight: '500',
-        color: Colors.textSecondary,
+        fontWeight: '600',
+        color: Colors.textPrimary,
         flex: 1,
         marginRight: 8,
     },
     overviewDetail: {
-        fontSize: 12,
-        fontWeight: '500',
-        color: Colors.textTertiary,
+        fontSize: 11,
+        fontWeight: '600',
+        color: Colors.textSecondary,
+        backgroundColor: Colors.surfaceElevated,
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        overflow: 'hidden',
     },
 
     // Section Divider
@@ -548,10 +561,26 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.06)',
         padding: 18,
     },
+    exerciseNumberBadge: {
+        position: 'absolute',
+        top: -1,
+        left: -1,
+        backgroundColor: Colors.accent,
+        borderTopLeftRadius: 20,
+        borderBottomRightRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        zIndex: 1,
+    },
+    exerciseNumberText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: Colors.textPrimary,
+    },
     exerciseHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
+        marginTop: 14,
         marginBottom: 16,
     },
     exerciseNameCol: {
@@ -567,7 +596,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500',
         color: Colors.textSecondary,
-        marginTop: 4,
+        marginTop: 2,
     },
     goalHighlight: {
         color: Colors.accent,
@@ -580,7 +609,7 @@ const styles = StyleSheet.create({
     actionButton: {
         width: 36,
         height: 36,
-        borderRadius: 10,
+        borderRadius: 9,
         backgroundColor: Colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
