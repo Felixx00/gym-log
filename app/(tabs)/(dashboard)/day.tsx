@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -191,7 +192,12 @@ export default function DayScreen() {
                 )}
 
                 {exercises.map((exercise, i) => (
-                    <View key={exercise.id} style={styles.exerciseCard}>
+                    <View key={exercise.id} style={styles.exerciseCardOuter}>
+                    <LinearGradient
+                        colors={['#222222', Colors.surface, Colors.surface]}
+                        locations={[0, 0.4, 1]}
+                        style={styles.exerciseCard}
+                    >
                         {/* Number Badge */}
                         <View style={styles.exerciseNumberBadge}>
                             <Text style={styles.exerciseNumberText}>{i + 1}</Text>
@@ -358,6 +364,7 @@ export default function DayScreen() {
                             onChangeText={(val) => updateExerciseNotes(exercise.id, val)}
                             multiline
                         />
+                    </LinearGradient>
                     </View>
                 ))}
             </Animated.ScrollView>
@@ -554,12 +561,15 @@ const styles = StyleSheet.create({
     },
 
     // Exercise Card
-    exerciseCard: {
-        backgroundColor: Colors.surface,
+    exerciseCardOuter: {
         borderRadius: 20,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.06)',
+        overflow: 'hidden',
+    },
+    exerciseCard: {
         padding: 18,
+        borderRadius: 20,
     },
     exerciseNumberBadge: {
         position: 'absolute',

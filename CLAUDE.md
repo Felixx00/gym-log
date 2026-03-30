@@ -23,7 +23,7 @@ npm run lint         # Linting
 - **Language**: TypeScript (strict mode)
 - **Navigation**: Expo Router (file-based routing)
 - **Database**: SQLite via `expo-sqlite` (local persistence)
-- **UI**: React Navigation, Expo Vector Icons (Ionicons), Reanimated & Gesture Handler
+- **UI**: React Navigation, Expo Vector Icons (Ionicons), Reanimated & Gesture Handler, `expo-linear-gradient`
 - **Typography**: Space Grotesk (`@expo-google-fonts/space-grotesk`) — loaded via `useFonts` in root layout
 - **File I/O**: `expo-file-system` (new class-based API: `File`, `Paths`) + `expo-sharing`
 - **Theming**: Single dark theme — `constants/theme.ts`
