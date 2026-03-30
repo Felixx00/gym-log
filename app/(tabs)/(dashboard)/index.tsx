@@ -12,7 +12,7 @@ import { Text } from '@/components/StyledText';
 
 import { Colors } from '@/constants/theme';
 import { type DashboardStats, type WeekDayStatus, loadDashboardStats } from '@/services/database';
-import { generateTestProgram } from '@/services/devGenerator';
+
 
 const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -46,7 +46,7 @@ function formatRelativeDate(dateStr: string): string {
 export default function DashboardScreen() {
     const router = useRouter();
     const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
+
 
     const today = new Date();
     const dayName = WEEKDAYS[today.getDay()];
@@ -56,19 +56,6 @@ export default function DashboardScreen() {
             loadDashboardStats().then(setStats).catch(console.error);
         }, [])
     );
-
-    const handleGenerate = async () => {
-        setIsGenerating(true);
-        try {
-            await generateTestProgram();
-            const data = await loadDashboardStats();
-            setStats(data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
 
     const handleOpenProgram = () => {
         if (!stats) return;
@@ -106,18 +93,6 @@ export default function DashboardScreen() {
                         <Text style={styles.dayText}>{dayName}</Text>
                         <Text style={styles.greeting}>Dashboard</Text>
                     </View>
-                    <Pressable
-                        style={styles.generateButton}
-                        onPress={handleGenerate}
-                        disabled={isGenerating}
-                        hitSlop={6}
-                    >
-                        <Ionicons
-                            name="flask-outline"
-                            size={20}
-                            color={isGenerating ? Colors.textTertiary : Colors.textSecondary}
-                        />
-                    </Pressable>
                 </View>
 
                 {!stats ? (
@@ -330,15 +305,6 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: Colors.textPrimary,
         letterSpacing: -0.5,
-    },
-    generateButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: Colors.surface,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 4,
     },
 
     // Weekly progress

@@ -55,7 +55,7 @@ services/
 ├── database.ts                  # SQLite service layer (all DB logic)
 ├── exportTypes.ts               # Export JSON schema types (versioned)
 ├── exportValidator.ts           # Import file validation
-└── devGenerator.ts              # Test program generator (dev tool)
+
 data/
 └── exerciseSeed.json            # ~180 built-in exercises for exercise library
 components/
