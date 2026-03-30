@@ -166,6 +166,30 @@ export default function DayScreen() {
                 onContentSizeChange={(_, h) => setContentHeight(h)}
                 onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
             >
+                {/* Workout Overview */}
+                {exercises.length > 0 && (
+                    <>
+                    <View style={styles.overviewContainer}>
+                        <View style={styles.overviewList}>
+                            {exercises.map((ex) => (
+                                <View key={ex.id} style={styles.overviewRow}>
+                                    <View style={styles.overviewDot} />
+                                    <Text style={styles.overviewName} numberOfLines={1}>{ex.name}</Text>
+                                    <Text style={styles.overviewDetail}>
+                                        {ex.sets.length}×{ex.repRange}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                    <View style={styles.sectionDivider}>
+                        <View style={styles.sectionDividerLine} />
+                        <Text style={styles.sectionDividerText}>EXERCISES</Text>
+                        <View style={styles.sectionDividerLine} />
+                    </View>
+                    </>
+                )}
+
                 {exercises.map((exercise) => (
                     <View key={exercise.id} style={styles.exerciseCard}>
                         {/* Exercise Header */}
@@ -442,7 +466,57 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: Colors.border,
         marginHorizontal: 20,
-        marginBottom: 16,
+        marginBottom: 12,
+    },
+
+    // Workout Overview
+    overviewContainer: {
+        paddingHorizontal: 4,
+    },
+    overviewList: {
+        gap: 8,
+    },
+    overviewRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    overviewDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: Colors.accent,
+        marginRight: 10,
+    },
+    overviewName: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: Colors.textSecondary,
+        flex: 1,
+        marginRight: 8,
+    },
+    overviewDetail: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: Colors.textTertiary,
+    },
+
+    // Section Divider
+    sectionDivider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 10,
+    },
+    sectionDividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: Colors.border,
+    },
+    sectionDividerText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: Colors.textTertiary,
+        letterSpacing: 1,
     },
 
     // Scroll
