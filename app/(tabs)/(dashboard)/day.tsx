@@ -482,11 +482,11 @@ const styles = StyleSheet.create({
 
     // Workout Overview
     overviewContainer: {
-        backgroundColor: Colors.surface,
         borderRadius: 16,
         borderLeftWidth: 3,
         borderLeftColor: Colors.accent,
-        padding: 14,
+        paddingLeft: 14,
+        paddingVertical: 6,
     },
     overviewList: {
         gap: 10,
@@ -583,9 +583,9 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     exerciseNumberText: {
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: '700',
-        color: Colors.textPrimary,
+        color: Colors.background,
     },
     exerciseHeader: {
         flexDirection: 'row',
