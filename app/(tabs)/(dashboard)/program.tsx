@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -126,6 +127,8 @@ export default function ProgramScreen() {
             >
                 {weekData.map((week, i) => {
                     const isActive = i === activeWeek;
+                    const completedInWeek = week.days.filter(d => d.completed).length;
+                    const allDone = completedInWeek === week.days.length;
                     return (
                         <Pressable
                             key={week.id}
@@ -143,6 +146,13 @@ export default function ProgramScreen() {
                             >
                                 {week.name}
                             </Text>
+                            {allDone ? (
+                                <Ionicons name="checkmark-circle" size={12} color={isActive ? Colors.textPrimary : Colors.accent} />
+                            ) : completedInWeek > 0 ? (
+                                <Text style={[styles.weekPillProgress, isActive && styles.weekPillProgressActive]}>
+                                    {completedInWeek}/{week.days.length}
+                                </Text>
+                            ) : null}
                         </Pressable>
                     );
                 })}
@@ -162,6 +172,7 @@ export default function ProgramScreen() {
                     const status = getDayStatus(day, isCurrent);
                     const dayNumber = index + 1;
                     const displayName = day.customName || day.defaultName;
+                    const isLast = index === currentWeek.days.length - 1;
 
                     const handleDayPress = () => {
                         if (day.completed) {
@@ -176,67 +187,90 @@ export default function ProgramScreen() {
                             });
                             return;
                         }
-                        setSelectedDayId((prev) => prev === day.id ? null : day.id);
+                        setSelectedDayId(day.id);
                     };
 
                     return (
-                        <Pressable
-                            key={day.id}
-                            style={[
-                                styles.dayCard,
-                                status === 'current' && styles.dayCardCurrent,
-                                status === 'completed' && styles.dayCardCompleted,
-                            ]}
-                            onPress={handleDayPress}
-                        >
-                            <View style={styles.dayCardTop}>
-                                <View style={styles.dayCardInfo}>
-                                    <Text style={styles.dayLabel}>DAY {dayNumber}</Text>
-                                    <Text style={styles.dayName}>{displayName}</Text>
+                        <View key={day.id} style={styles.timelineRow}>
+                            {/* Timeline left */}
+                            <View style={styles.timelineLeft}>
+                                <View style={[
+                                    styles.timelineNode,
+                                    status === 'current' && styles.timelineNodeCurrent,
+                                    status === 'completed' && styles.timelineNodeCompleted,
+                                ]}>
+                                    <Text style={[
+                                        styles.timelineNodeText,
+                                        (status === 'current' || status === 'completed') && styles.timelineNodeTextCurrent,
+                                    ]}>{dayNumber}</Text>
                                 </View>
-                                {status === 'completed' && (
-                                    <View style={styles.statusBadgeCompleted}>
-                                        <Ionicons name="checkmark" size={14} color={Colors.textPrimary} />
+                                {!isLast && <View style={styles.timelineLine} />}
+                            </View>
+
+                            {/* Card */}
+                            <Pressable
+                                style={[
+                                    status === 'current' ? styles.dayCardCurrentOuter : styles.dayCard,
+                                    status === 'completed' && styles.dayCardCompleted,
+                                ]}
+                                onPress={handleDayPress}
+                            >
+                                {/* Header */}
+                                <View style={styles.dayCardTop}>
+                                    <View style={styles.dayCardInfo}>
+                                        {status === 'current' && (
+                                            <Text style={styles.dayLabelCurrent}>NEXT UP</Text>
+                                        )}
+                                        <Text style={status === 'current' ? styles.dayNameCurrent : styles.dayName}>
+                                            {displayName}
+                                        </Text>
                                     </View>
-                                )}
-                                {status === 'future' && (
-                                    <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
-                                )}
-                            </View>
+                                    {status === 'completed' && (
+                                        <View style={styles.statusBadgeCompleted}>
+                                            <Ionicons name="checkmark" size={14} color={Colors.textPrimary} />
+                                        </View>
+                                    )}
+                                    {status === 'future' && (
+                                        <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+                                    )}
+                                </View>
 
-                            <View style={styles.metaRow}>
-                                <Ionicons
-                                    name={status === 'completed' ? 'checkmark-circle-outline' : 'barbell-outline'}
-                                    size={14}
-                                    color={Colors.textSecondary}
-                                />
-                                <Text style={styles.metaText}>
-                                    {status === 'completed' && day.completedAt
-                                        ? `Completed ${formatCompletedDate(day.completedAt)}`
-                                        : `${day.exercises.length} ${day.exercises.length === 1 ? 'Exercise' : 'Exercises'}`
-                                    }
-                                </Text>
-                            </View>
+                                {/* Meta */}
+                                <View style={styles.metaRow}>
+                                    <Ionicons
+                                        name={status === 'completed' ? 'checkmark-circle-outline' : 'barbell-outline'}
+                                        size={14}
+                                        color={status === 'completed' ? Colors.accent : Colors.textSecondary}
+                                    />
+                                    <Text style={[styles.metaText, status === 'completed' && styles.metaTextCompleted]}>
+                                        {status === 'completed' && day.completedAt
+                                            ? `Completed ${formatCompletedDate(day.completedAt)}`
+                                            : `${day.exercises.length} ${day.exercises.length === 1 ? 'Exercise' : 'Exercises'}`
+                                        }
+                                    </Text>
+                                </View>
 
-                            {status === 'current' && (
-                                <Pressable
-                                    style={styles.startButton}
-                                    onPress={() => {
-                                        router.push({
-                                            pathname: '/day',
-                                            params: {
-                                                dayId: day.id,
-                                                dayNumber: String(dayNumber),
-                                                dayName: displayName,
-                                            },
-                                        });
-                                    }}
-                                >
-                                    <Text style={styles.startButtonText}>Start Workout</Text>
-                                    <Ionicons name="chevron-forward" size={18} color={Colors.textPrimary} />
-                                </Pressable>
-                            )}
-                        </Pressable>
+                                {/* Start button */}
+                                {status === 'current' && (
+                                    <Pressable
+                                        style={styles.startButton}
+                                        onPress={() => {
+                                            router.push({
+                                                pathname: '/day',
+                                                params: {
+                                                    dayId: day.id,
+                                                    dayNumber: String(dayNumber),
+                                                    dayName: displayName,
+                                                },
+                                            });
+                                        }}
+                                    >
+                                        <Text style={styles.startButtonText}>Start Workout</Text>
+                                        <Ionicons name="arrow-forward" size={18} color={Colors.background} />
+                                    </Pressable>
+                                )}
+                            </Pressable>
+                        </View>
                     );
                 })}
             </ScrollView>
@@ -307,13 +341,15 @@ const styles = StyleSheet.create({
     },
     weekPill: {
         height: 36,
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         borderRadius: 18,
         backgroundColor: Colors.surface,
         borderWidth: 1,
         borderColor: Colors.border,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        gap: 6,
     },
     weekPillActive: {
         backgroundColor: Colors.accent,
@@ -327,6 +363,14 @@ const styles = StyleSheet.create({
     weekPillTextActive: {
         color: Colors.textPrimary,
     },
+    weekPillProgress: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: Colors.textTertiary,
+    },
+    weekPillProgressActive: {
+        color: 'rgba(255,255,255,0.7)',
+    },
 
     // Day Cards
     daysScroll: {
@@ -335,22 +379,76 @@ const styles = StyleSheet.create({
     daysContent: {
         paddingHorizontal: 16,
         paddingBottom: 40,
-        gap: 10,
     },
+
+    // Timeline
+    timelineRow: {
+        flexDirection: 'row',
+    },
+    timelineLeft: {
+        width: 36,
+        alignItems: 'center',
+        paddingTop: 16,
+    },
+    timelineLine: {
+        flex: 1,
+        width: 2,
+        backgroundColor: Colors.border,
+    },
+    timelineNode: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: Colors.surfaceElevated,
+        borderWidth: 2,
+        borderColor: Colors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    timelineNodeCurrent: {
+        backgroundColor: Colors.accent,
+        borderColor: Colors.accent,
+    },
+    timelineNodeCompleted: {
+        backgroundColor: Colors.accent,
+        borderColor: Colors.accent,
+    },
+    timelineNodeText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+    },
+    timelineNodeTextCurrent: {
+        color: Colors.background,
+    },
+
+    // Future / Completed cards
     dayCard: {
+        flex: 1,
         backgroundColor: Colors.surface,
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
         borderColor: Colors.border,
-    },
-    dayCardCurrent: {
-        borderColor: Colors.accent,
-        borderWidth: 1.5,
+        marginLeft: 10,
+        marginBottom: 10,
     },
     dayCardCompleted: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
+
+    // Current day card
+    dayCardCurrentOuter: {
+        flex: 1,
+        borderRadius: 18,
+        borderLeftWidth: 3,
+        borderLeftColor: Colors.accent,
+        backgroundColor: Colors.surface,
+        padding: 18,
+        marginLeft: 10,
+        marginBottom: 10,
+    },
+
     dayCardTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -360,12 +458,17 @@ const styles = StyleSheet.create({
     dayCardInfo: {
         flex: 1,
     },
-    dayLabel: {
+    dayLabelCurrent: {
         fontSize: 11,
-        fontWeight: '600',
-        color: Colors.textSecondary,
-        letterSpacing: 0.5,
-        marginBottom: 2,
+        fontWeight: '700',
+        color: Colors.accent,
+        letterSpacing: 1.5,
+        marginBottom: 4,
+    },
+    dayNameCurrent: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: Colors.textPrimary,
     },
     dayName: {
         fontSize: 17,
@@ -388,14 +491,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 6,
         backgroundColor: Colors.accent,
-        borderRadius: 10,
+        borderRadius: 12,
         paddingVertical: 12,
-        marginTop: 12,
+        marginTop: 14,
     },
     startButtonText: {
         fontSize: 15,
         fontWeight: '700',
-        color: Colors.textPrimary,
+        color: Colors.background,
     },
 
     // Shared meta
@@ -407,5 +510,8 @@ const styles = StyleSheet.create({
     metaText: {
         fontSize: 13,
         color: Colors.textSecondary,
+    },
+    metaTextCompleted: {
+        color: Colors.textTertiary,
     },
 });
