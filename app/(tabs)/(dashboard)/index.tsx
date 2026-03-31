@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -90,8 +91,11 @@ export default function DashboardScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.dayText}>{dayName}</Text>
+                        <Text style={styles.dayText}>{dayName}, {today.getDate()}</Text>
                         <Text style={styles.greeting}>Dashboard</Text>
+                    </View>
+                    <View style={styles.headerLogo}>
+                        <Text style={styles.headerLogoText}>Φ</Text>
                     </View>
                 </View>
 
@@ -163,11 +167,16 @@ export default function DashboardScreen() {
                             style={styles.sessionCard}
                             onPress={stats.nextDay ? handleStartWorkout : handleOpenProgram}
                         >
-                            {stats.nextDay ? (
-                                <>
-                                    <View style={styles.sessionBody}>
-                                        <View style={styles.sessionContent}>
+                            <LinearGradient
+                                colors={['#2A1A1A', Colors.surface]}
+                                locations={[0, 0.7]}
+                                style={styles.sessionGradient}
+                            >
+                                {stats.nextDay ? (
+                                    <View style={styles.sessionLayout}>
+                                        <View style={styles.sessionLeft}>
                                             <View style={styles.sessionBadge}>
+                                                <View style={styles.sessionBadgeDot} />
                                                 <Text style={styles.sessionBadgeText}>NEXT SESSION</Text>
                                             </View>
 
@@ -175,77 +184,72 @@ export default function DashboardScreen() {
                                                 {stats.nextDay.name}
                                             </Text>
 
-                                            <Text style={styles.sessionWeek}>
-                                                Week {stats.currentWeek} of {stats.totalWeeks}
-                                            </Text>
-                                        </View>
-
-                                        <View style={styles.sessionArrow}>
-                                            <Ionicons name="arrow-forward" size={20} color={Colors.textPrimary} />
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.sessionDivider} />
-
-                                    <View style={styles.sessionFooter}>
-                                        <View style={styles.sessionMetaItem}>
-                                            <Ionicons name="barbell-outline" size={14} color={Colors.textSecondary} />
-                                            <Text style={styles.sessionMetaText}>
-                                                {stats.nextDay.exerciseCount} {stats.nextDay.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
-                                            </Text>
-                                        </View>
-                                        <View style={styles.sessionMetaItem}>
-                                            <Ionicons name="pie-chart-outline" size={14} color={Colors.textSecondary} />
-                                            <Text style={styles.sessionMetaText}>{progress}%</Text>
-                                        </View>
-                                    </View>
-                                </>
-                            ) : (
-                                <>
-                                    <View style={styles.sessionBody}>
-                                        <View style={styles.sessionContent}>
-                                            <View style={styles.sessionBadge}>
-                                                <Text style={styles.sessionBadgeText}>COMPLETED</Text>
+                                            <View style={styles.sessionMeta}>
+                                                <Text style={styles.sessionMetaText}>
+                                                    Week {stats.currentWeek}
+                                                </Text>
+                                                <View style={styles.sessionMetaDot} />
+                                                <Text style={styles.sessionMetaText}>
+                                                    Day {stats.nextDay.dayNumber}
+                                                </Text>
+                                                <View style={styles.sessionMetaDot} />
+                                                <Text style={styles.sessionMetaText}>
+                                                    {stats.nextDay.exerciseCount} {stats.nextDay.exerciseCount === 1 ? 'exercise' : 'exercises'}
+                                                </Text>
                                             </View>
+                                        </View>
+
+                                        <View style={styles.sessionCta}>
+                                            <Ionicons name="play" size={24} color={Colors.background} />
+                                        </View>
+                                    </View>
+                                ) : (
+                                    <View style={styles.sessionLayout}>
+                                        <View style={styles.sessionLeft}>
+                                            <View style={[styles.sessionBadge, styles.sessionBadgeCompleted]}>
+                                                <Text style={[styles.sessionBadgeText, { color: Colors.success }]}>COMPLETED</Text>
+                                            </View>
+
                                             <Text style={styles.sessionDayName}>All workouts done!</Text>
-                                            <Text style={styles.sessionWeek}>
-                                                {stats.completedDays}/{stats.totalDays} sessions completed
-                                            </Text>
+
+                                            <View style={styles.sessionMeta}>
+                                                <Text style={styles.sessionMetaText}>
+                                                    {stats.completedDays}/{stats.totalDays} sessions
+                                                </Text>
+                                                <View style={styles.sessionMetaDot} />
+                                                <Text style={styles.sessionMetaText}>
+                                                    {progress}% complete
+                                                </Text>
+                                            </View>
                                         </View>
-                                        <View style={styles.sessionArrow}>
-                                            <Ionicons name="arrow-forward" size={20} color={Colors.textPrimary} />
+
+                                        <View style={styles.sessionCta}>
+                                            <Ionicons name="arrow-forward" size={24} color={Colors.background} />
                                         </View>
                                     </View>
-
-                                    <View style={styles.sessionDivider} />
-
-                                    <View style={styles.sessionFooter}>
-                                        <View style={styles.sessionMetaItem}>
-                                            <Ionicons name="checkmark-circle-outline" size={14} color={Colors.success} />
-                                            <Text style={[styles.sessionMetaText, { color: Colors.success }]}>
-                                                {progress}% COMPLETE
-                                            </Text>
-                                        </View>
-                                    </View>
-                                </>
-                            )}
+                                )}
+                            </LinearGradient>
                         </Pressable>
 
                         {/* Stats Row */}
                         <View style={styles.statsRow}>
                             <View style={styles.statCard}>
-                                <Text style={styles.statValue}>{stats.workoutsThisWeek}</Text>
-                                <Text style={styles.statLabel}>This Week</Text>
-                            </View>
-                            <View style={styles.statCard}>
-                                <Text style={styles.statValue}>{stats.completedDays}</Text>
-                                <Text style={styles.statLabel}>Total Done</Text>
+                                <Text style={styles.statValue}>{stats.workoutsThisMonth}</Text>
+                                <Text style={styles.statLabel}>This Month</Text>
                             </View>
                             <View style={styles.statCard}>
                                 <Text style={styles.statValue}>
-                                    {stats.totalDays - stats.completedDays}
+                                    {stats.totalDays > 0
+                                        ? Math.round((stats.completedDays / stats.totalDays) * 100)
+                                        : 0}%
                                 </Text>
-                                <Text style={styles.statLabel}>Remaining</Text>
+                                <Text style={styles.statLabel}>Completion</Text>
+                            </View>
+                            <View style={styles.statCard}>
+                                <Text style={styles.statValue}>
+                                    {stats.currentWeek}/{stats.totalWeeks}
+                                </Text>
+                                <Text style={styles.statLabel}>Week</Text>
                             </View>
                         </View>
 
@@ -289,9 +293,22 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         paddingTop: 80,
         paddingBottom: 28,
+    },
+    headerLogo: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        backgroundColor: Colors.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerLogoText: {
+        fontSize: 27,
+        fontWeight: '700',
+        color: Colors.accent,
     },
     dayText: {
         fontSize: 14,
@@ -398,78 +415,88 @@ const styles = StyleSheet.create({
 
     // Combined session card
     sessionCard: {
-        backgroundColor: Colors.surfaceElevated,
-        borderRadius: 18,
+        borderRadius: 20,
         marginBottom: 16,
-        borderWidth: 1,
-        borderColor: Colors.borderLight,
+        borderLeftWidth: 3,
+        borderLeftColor: Colors.accent,
+        backgroundColor: Colors.surface,
         overflow: 'hidden',
     },
-    sessionBody: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    sessionGradient: {
         padding: 24,
-        paddingBottom: 20,
-    },
-    sessionContent: {
-        flex: 1,
     },
     sessionBadge: {
         alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        backgroundColor: 'rgba(255,62,62,0.12)',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        marginBottom: 14,
+    },
+    sessionBadgeCompleted: {
+        backgroundColor: 'rgba(76,175,80,0.12)',
+    },
+    sessionBadgeDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
         backgroundColor: Colors.accent,
-        borderRadius: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        marginBottom: 16,
     },
     sessionBadgeText: {
         fontSize: 11,
-        fontWeight: '800',
-        color: Colors.background,
+        fontWeight: '700',
+        color: Colors.textPrimary,
         letterSpacing: 1.5,
     },
     sessionDayName: {
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: '800',
         color: Colors.textPrimary,
         letterSpacing: -0.5,
-        marginBottom: 4,
+        marginBottom: 8,
     },
-    sessionWeek: {
-        fontSize: 14,
-        color: Colors.textSecondary,
-    },
-    sessionArrow: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: Colors.accent,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 16,
-    },
-    sessionDivider: {
-        height: 1,
-        backgroundColor: Colors.border,
-        marginHorizontal: 24,
-    },
-    sessionFooter: {
+    sessionMeta: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 24,
-        paddingHorizontal: 24,
-        paddingVertical: 16,
+        flexWrap: 'wrap',
+        gap: 8,
     },
-    sessionMetaItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
+    sessionMetaDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: Colors.textTertiary,
     },
     sessionMetaText: {
-        fontSize: 12,
-        fontWeight: '600',
+        fontSize: 14,
+        fontWeight: '500',
         color: Colors.textSecondary,
+    },
+    sessionLayout: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+    },
+    sessionLeft: {
+        flex: 1,
+        marginRight: 16,
+    },
+    sessionCta: {
+        width: 64,
+        height: 64,
+        borderRadius: 26,
+        backgroundColor: Colors.accent,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    sessionCtaLabel: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: Colors.background,
         letterSpacing: 1,
+        marginTop: 2,
     },
 
     // Section labels (reused)

@@ -197,6 +197,7 @@ export type DashboardStats = {
     nextDay: { id: number; name: string; dayNumber: number; exerciseCount: number } | null;
     lastWorkout: { name: string; completedAt: string } | null;
     workoutsThisWeek: number;
+    workoutsThisMonth: number;
     weeklyActivity: WeekDayStatus[]; // Mon=0 through Sun=6
 };
 
@@ -286,6 +287,12 @@ export async function loadDashboardStats(): Promise<DashboardStats | null> {
         (d) => d.completed_at! >= weekAgoStr
     ).length;
 
+    // Workouts completed this calendar month
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const workoutsThisMonth = completedDaysList.filter(
+        (d) => d.completed_at! >= monthStart
+    ).length;
+
     // Weekly activity (Mon=0 .. Sun=6) for the current calendar week
     const todayDow = now.getDay(); // 0=Sun, 1=Mon...
     const mondayOffset = todayDow === 0 ? -6 : 1 - todayDow;
@@ -321,6 +328,7 @@ export async function loadDashboardStats(): Promise<DashboardStats | null> {
         nextDay,
         lastWorkout,
         workoutsThisWeek,
+        workoutsThisMonth,
         weeklyActivity,
     };
 }
