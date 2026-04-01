@@ -97,10 +97,18 @@ export default function LibraryScreen() {
     const renderCard = (item: ProgramSummary) => (
         <View key={item.id} style={styles.card}>
             <View style={styles.accentBarWrapper}>
-                <View style={styles.accentBar} />
+                <View style={[styles.accentBar, item.isCompleted && styles.accentBarCompleted]} />
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                <View style={styles.cardNameRow}>
+                    <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                    {item.isCompleted && (
+                        <View style={styles.completedBadge}>
+                            <Ionicons name="checkmark-circle" size={14} color={Colors.success} />
+                            <Text style={styles.completedBadgeText}>Done</Text>
+                        </View>
+                    )}
+                </View>
                 <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
                         <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
@@ -172,11 +180,13 @@ export default function LibraryScreen() {
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <View style={styles.activeBadge}>
-                                    <View style={styles.activeDot} />
-                                    <Text style={styles.activeBadgeText}>ACTIVE ROUTINE</Text>
+                                    <View style={[styles.activeDot, activeProgram.isCompleted && styles.activeDotCompleted]} />
+                                    <Text style={[styles.activeBadgeText, activeProgram.isCompleted && styles.activeBadgeTextCompleted]}>
+                                        {activeProgram.isCompleted ? 'COMPLETED' : 'ACTIVE ROUTINE'}
+                                    </Text>
                                 </View>
                             </View>
-                            <View style={styles.activeCard}>
+                            <View style={[styles.activeCard, activeProgram.isCompleted && styles.activeCardCompleted]}>
                                 <View style={styles.activeCardInner}>
                                     <View style={styles.activeCardTop}>
                                         <Text style={styles.activeCardName} numberOfLines={1}>
@@ -360,11 +370,17 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         backgroundColor: Colors.accent,
     },
+    activeDotCompleted: {
+        backgroundColor: Colors.success,
+    },
     activeBadgeText: {
         fontSize: 12,
         fontWeight: '700',
         color: Colors.accent,
         letterSpacing: 2,
+    },
+    activeBadgeTextCompleted: {
+        color: Colors.success,
     },
 
     // Active card (featured)
@@ -382,6 +398,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
+    },
+    activeCardCompleted: {
+        borderColor: Colors.success,
     },
     activeCardName: {
         flex: 1,
@@ -418,7 +437,34 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.border,
     },
 
+    // Completed badge
+    completedBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        gap: 4,
+        backgroundColor: Colors.success + '18',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+    },
+    completedBadgeText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: Colors.success,
+        letterSpacing: 0.3,
+    },
+
     // Regular cards
+    cardNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 16,
+    },
+    accentBarCompleted: {
+        backgroundColor: Colors.success,
+    },
     card: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -451,7 +497,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: Colors.textPrimary,
-        marginBottom: 16,
+        flexShrink: 1,
     },
     metaRow: {
         flexDirection: 'row',

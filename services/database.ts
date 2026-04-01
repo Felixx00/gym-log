@@ -457,6 +457,8 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
         days_per_week: number;
         created_at: string;
         is_active: number;
+        total_days: number;
+        completed_days: number;
     }>(`
         SELECT
             p.id,
@@ -464,7 +466,9 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
             COUNT(DISTINCT w.id) AS week_count,
             COALESCE(MAX(day_counts.day_count), 0) AS days_per_week,
             p.created_at,
-            p.is_active
+            p.is_active,
+            COALESCE(completion.total_days, 0) AS total_days,
+            COALESCE(completion.completed_days, 0) AS completed_days
         FROM programs p
         LEFT JOIN weeks w ON w.program_id = p.id
         LEFT JOIN (
@@ -472,6 +476,14 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
             FROM days
             GROUP BY week_id
         ) day_counts ON day_counts.week_id = w.id
+        LEFT JOIN (
+            SELECT w2.program_id,
+                   COUNT(*) AS total_days,
+                   SUM(CASE WHEN d.completed = 1 THEN 1 ELSE 0 END) AS completed_days
+            FROM days d
+            JOIN weeks w2 ON d.week_id = w2.id
+            GROUP BY w2.program_id
+        ) completion ON completion.program_id = p.id
         GROUP BY p.id
         ORDER BY p.created_at DESC
     `);
@@ -483,6 +495,7 @@ export async function loadProgramList(): Promise<ProgramSummary[]> {
         daysPerWeek: row.days_per_week,
         createdAt: row.created_at,
         isActive: row.is_active === 1,
+        isCompleted: row.total_days > 0 && row.total_days === row.completed_days,
     }));
 }
 

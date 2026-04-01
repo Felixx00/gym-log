@@ -12,7 +12,7 @@ All DB logic lives in `services/database.ts`. Components never write SQL directl
 |----------|-------------|
 | `initDatabase()` | Opens DB, enables WAL + foreign keys, runs migrations |
 | `saveProgram(name, duration, daysPerWeek, weeks, existingProgramId?)` | Saves full program tree in a transaction. Returns `programId` |
-| `loadProgramList()` | Returns `ProgramSummary[]` for dashboard. Derives week/day counts from actual child rows via JOINs |
+| `loadProgramList()` | Returns `ProgramSummary[]` for library/dashboard. Derives week/day counts and completion status from actual child rows via JOINs |
 | `loadProgram(programId)` | Reconstructs full nested `Week[]` from DB |
 | `deleteProgram(programId)` | Deletes program + all children (CASCADE) |
 | `loadDay(dayId)` | Loads a single day with exercises and sets |

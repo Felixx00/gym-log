@@ -45,6 +45,7 @@ type ProgramSummary = {
     daysPerWeek: number;
     createdAt: string;      // ISO timestamp
     isActive: boolean;      // whether this is the active routine
+    isCompleted: boolean;   // all days in the program are completed
 };
 ```
 

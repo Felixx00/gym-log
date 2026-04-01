@@ -38,4 +38,5 @@ export type ProgramSummary = {
     daysPerWeek: number;
     createdAt: string;
     isActive: boolean;
+    isCompleted: boolean;
 };
