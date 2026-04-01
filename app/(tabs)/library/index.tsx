@@ -94,8 +94,20 @@ export default function LibraryScreen() {
         }
     };
 
+    const handleCardPress = (program: ProgramSummary) => {
+        if (!program.isCompleted) return;
+        router.push({
+            pathname: '/library/program',
+            params: { programId: program.id },
+        });
+    };
+
     const renderCard = (item: ProgramSummary) => (
-        <View key={item.id} style={styles.card}>
+        <Pressable
+            key={item.id}
+            style={styles.card}
+            onPress={() => handleCardPress(item)}
+        >
             <View style={styles.accentBarWrapper}>
                 <View style={[styles.accentBar, item.isCompleted && styles.accentBarCompleted]} />
             </View>
@@ -131,7 +143,7 @@ export default function LibraryScreen() {
                     color={menuTarget?.id === item.id ? Colors.textPrimary : Colors.textTertiary}
                 />
             </Pressable>
-        </View>
+        </Pressable>
     );
 
     const dropdownScale = menuAnim.interpolate({
@@ -186,7 +198,10 @@ export default function LibraryScreen() {
                                     </Text>
                                 </View>
                             </View>
-                            <View style={[styles.activeCard, activeProgram.isCompleted && styles.activeCardCompleted]}>
+                            <Pressable
+                                style={[styles.activeCard, activeProgram.isCompleted && styles.activeCardCompleted]}
+                                onPress={() => handleCardPress(activeProgram)}
+                            >
                                 <View style={styles.activeCardInner}>
                                     <View style={styles.activeCardTop}>
                                         <Text style={styles.activeCardName} numberOfLines={1}>
@@ -216,7 +231,7 @@ export default function LibraryScreen() {
                                         </View>
                                     </View>
                                 </View>
-                            </View>
+                            </Pressable>
                         </View>
                     )}
 

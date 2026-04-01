@@ -7,6 +7,8 @@ export default function LibraryLayout() {
       <Stack.Screen name="create" />
       <Stack.Screen name="weeks" />
       <Stack.Screen name="edit" />
+      <Stack.Screen name="program" />
+      <Stack.Screen name="day" />
     </Stack>
   );
 }

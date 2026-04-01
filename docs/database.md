@@ -98,4 +98,4 @@ All foreign keys on program tables use `ON DELETE CASCADE`. `position` columns e
 - **v4**: Re-seeded exercise library with expanded seed data (added ~80 new exercises)
 - **v5**: Added `programs.is_active` column for active routine feature
 
-Note: `programs.duration` and `programs.days_per_week` are metadata columns written on save, but `loadProgramList()` derives these values from actual child rows to avoid sync issues.
+Note: `programs.duration` and `programs.days_per_week` are metadata columns written on save, but `loadProgramList()` derives these values from actual child rows to avoid sync issues. `isCompleted` is also derived — `true` when all days in the program have `completed = 1`.
